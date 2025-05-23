@@ -34,7 +34,7 @@
 
 <div class="d-flex flex-wrap app-list">
     <?php foreach ($templates as $key => $value): ?>
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-3 mb-4">
             <div class="card h-100 border-0 hover-shadow-lg" data-app-alias="<?= $value['tplfile'] ?>" data-app-version="<?= $value['version'] ?>">
                 <div class="card-header border-0 pd-main <?php if ($nonce_template == $value['tplfile']) {
                                                             echo "tpl-active text-white";
