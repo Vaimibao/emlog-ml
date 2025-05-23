@@ -4,7 +4,6 @@
 sitemap.xml
 Dockerfile
 /content/backup/*.sql
-/content/cache/*
 /content/uploadfile/*
 
 # Exclude everything in the directory
