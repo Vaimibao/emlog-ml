@@ -32,7 +32,7 @@
     </div>
 </div>
 
-<div class="d-flex flex-wrap app-list">
+<div class="row app-list">
     <?php foreach ($templates as $key => $value): ?>
         <div class="col-md-6 col-lg-3 mb-4">
             <div class="card h-100 border-0 hover-shadow-lg" data-app-alias="<?= $value['tplfile'] ?>" data-app-version="<?= $value['version'] ?>">
