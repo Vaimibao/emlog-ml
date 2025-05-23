@@ -13,82 +13,162 @@ function timestamp() {
 }
 
 function em_confirm(id, property, token) {
-    let url, msg;
-/*vot*/    let text = lang('delete_not_recover')
+    let url;
+    let msg = '';
+    let text = ''
     switch (property) {
         case 'article':
             url = 'article.php?action=del&gid=' + id;
-            msg = lang('article_del_sure');
+            text = lang('article_del_sure');
+            delArticle(msg, text, url, token)
             break;
         case 'draft':
             url = 'article.php?action=del&draft=1&gid=' + id;
-            msg = lang('draft_del_sure');
+            text = lang('draft_del_sure');
+            delAlert(msg, text, url, token, lang('delete'), property)
             break;
         case 'tw':
             url = 'twitter.php?action=del&id=' + id;
-            msg = lang('twitter_del_sure');
+            text = lang('twitter_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'comment':
             url = 'comment.php?action=del&id=' + id;
-            msg = lang('comment_del_sure');
+            text = lang('comment_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'commentbyip':
             url = 'comment.php?action=delbyip&ip=' + id;
-            msg = lang('comment_ip_del_sure');
+            text = lang('comment_ip_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'link':
-            url = 'link.php?action=dellink&linkid=' + id;
-            msg = lang('link_del_sure');
+            url = 'link.php?action=del&linkid=' + id;
+            text = lang('link_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'navi':
             url = 'navbar.php?action=del&id=' + id;
-            msg = lang('navi_del_sure');
+            text = lang('navi_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'media':
             url = 'media.php?action=delete&aid=' + id;
-            msg = lang('attach_del_sure');
+            text = lang('attach_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'avatar':
             url = 'blogger.php?action=delicon';
-            msg = lang('avatar_del_sure');
+            text = lang('avatar_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'sort':
             url = 'sort.php?action=del&sid=' + id;
-            msg = lang('category_del_sure');
+            text = lang('category_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'del_user':
             url = 'user.php?action=del&uid=' + id;
-            msg = lang('user_del_sure');
+            text = lang('user_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'forbid_user':
             url = 'user.php?action=forbid&uid=' + id;
-            msg = lang('user_disable_sure');
-            text = '';
+            text = lang('user_disable_sure');
+            delAlert(msg, text, url, token, lang('disable'))
             break;
         case 'tpl':
             url = 'template.php?action=del&tpl=' + id;
-            msg = lang('template_del_sure');
+            text = lang('template_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'reset_widget':
             url = 'widgets.php?action=reset';
-            msg = lang('plugin_reset_sure');
-            text = '';
+            text = lang('plugin_reset_sure')
+            delAlert(msg, text, url, token, lang('restore'))
             break;
         case 'plu':
             url = 'plugin.php?action=del&plugin=' + id;
-            msg = lang('plugin_del_sure');
+            text = lang('plugin_del_sure');
+            delAlert(msg, text, url, token)
             break;
         case 'media_sort':
             url = 'media.php?action=del_media_sort&id=' + id;
-            msg = lang('media_category_del_sure');
-/*vot*/     text = lang('category_not_deleted');
+            text = lang('media_category_del_sure');
+            delAlert(msg, text, url, token)
+            break;
+        case 'ai_model':
+            url = 'setting.php?action=delete_model&ai_model_key=' + id;
+            text = lang('ai_model_del_sure');
+            delAlert(msg, text, url, token)
             break;
     }
-    swal({
-/*vot*/        title: msg, text: text, icon: "warning", buttons: [lang('cancel'), lang('ok')], dangerMode: true,
-    }).then((willDelete) => {
-        if (willDelete) {
-            window.location = url + '&token=' + token;
+}
+
+function infoAlert(msg) {
+    layer.alert(msg, {
+        icon: 2,
+        shadeClose: true,
+        title: '',
+    });
+}
+
+function delAlert(msg, text, url, token, btnText = lang('delete')) {
+    // icon: 0 default, 1 ok, 2 err, 3 ask
+    layer.confirm(text, {icon: 3, title: msg, skin: 'class-layer-danger', btn: [btnText, lang('cancel')]}, function (index) {
+        localStorage.setItem('alert_action_success', btnText);
+        window.location = url + '&token=' + token;
+        layer.close(index);
+    });
+}
+
+function delAlert2(msg, text, actionClosure, btnText = lang('delete')) {
+    layer.confirm(text, {icon: 3, title: msg, skin: 'class-layer-danger', btn: [btnText, lang('cancel')]}, function (index) {
+        actionClosure(); // Execute Closure
+        localStorage.setItem('alert_action_success', btnText);
+        layer.close(index);
+    });
+}
+
+function changeAuthorAlert() {
+    layer.prompt({
+        title: '输入新的作者ID',
+        formType: 0 // Single-line input box
+    }, function(value, index) {
+        $('#author').val(value); // Set the input author ID to the hidden input box
+        changeAuthor(); // Call the function to change the author
+        layer.close(index);
+    });
+}
+
+function delArticle(msg, text, url, token) {
+    layer.confirm(text, {
+        title: msg,
+        icon: 3,
+        btn: [lang('change_to_draft'), '<span class="text-danger">'+ lang('delete_permanently') +'</span>', lang('cancel')]
+    }, function (index) {
+        window.location = url + '&token=' + token;
+        layer.close(index);
+    }, function (index) {
+        localStorage.setItem('alert_action_success', lang('delete'));
+        window.location = url + '&rm=1&token=' + token;
+        layer.close(index);
+    }, function (index) {
+        layer.close(index);
+    });
+}
+
+function submitForm(formId, successMsg) {
+    $.ajax({
+        type: "POST",
+        url: $(formId).attr('action'),
+        data: $(formId).serialize(),
+        success: function () {
+            emlog_msg('success', lang('saved_ok_msg'))
+        },
+        error: function (xhr) {
+            const errorMsg = JSON.parse(xhr.responseText).msg;
+            emlog_msg('error', errorMsg, 4000);
         }
     });
 }
@@ -105,20 +185,27 @@ function hideActived() {
     $(".alert-danger").slideUp(300);
 }
 
-// Click action of [More Options]
-let icon_mod = "down";
-
 function displayToggle(id) {
-    $("#" + id).toggle();
-    if (icon_mod === "down") {
-        icon_mod = "right";
-        $(".icofont-simple-down").attr("class", "icofont-simple-right")
-    } else {
-        icon_mod = "down";
-        $(".icofont-simple-right").attr("class", "icofont-simple-down")
-    }
+    const element = $("#" + id);
+    const iconElement = element.prev().find(".icofont-simple-down, .icofont-simple-right");
 
-    Cookies.set('em_' + id, icon_mod, {expires: 365})
+    element.toggle();
+    const isVisible = element.is(":visible");
+
+    iconElement.attr("class", isVisible ? "icofont-simple-down" : "icofont-simple-right");
+    localStorage.setItem('em_' + id, isVisible ? "down" : "right");
+}
+
+function initDisplayState(id) {
+    const storedState = localStorage.getItem('em_' + id);
+    const element = $("#" + id);
+    const iconElement = element.prev().find(".icofont-simple-down, .icofont-simple-right");
+
+    if (storedState) {
+        const isVisible = storedState === "down";
+        element.toggle(isVisible);
+        iconElement.attr("class", isVisible ? "icofont-simple-down" : "icofont-simple-right");
+    }
 }
 
 function doToggle(id) {
@@ -138,8 +225,8 @@ function insertTag(tag, boxId) {
 }
 
 function isalias(a) {
-    var reg1 = /^[\u4e00-\u9fa5\w-]*$/;
-    var reg2 = /^[\d]+$/;
+    var reg1 = /^[\w-]*$/;
+    var reg2 = /^\d+$/;
     var reg3 = /^post(-\d+)?$/;
     if (!reg1.test(a)) {
         return 1;
@@ -147,7 +234,7 @@ function isalias(a) {
         return 2;
     } else if (reg3.test(a)) {
         return 3;
-    } else if (a == 't' || a == 'm' || a == 'admin') {
+    } else if (a === 't' || a === 'm' || a === 'admin') {
         return 4;
     } else {
         return 0;
@@ -158,7 +245,7 @@ function checkform() {
     var a = $.trim($("#alias").val());
     var t = $.trim($("#title").val());
 
-/*vot*/ if (typeof articleTextRecord !== "undefined") {  // When submitting, reset the original text record value to prevent the leaving prompt from appearing
+    if (typeof articleTextRecord !== "undefined") {  // When submitting, reset to original text to prevent leaving prompt
         articleTextRecord = $("textarea[name=logcontent]").text();
     } else {
         pageText = $("textarea").text();
@@ -166,7 +253,7 @@ function checkform() {
     if (0 == isalias(a)) {
         return true;
     } else {
-        alert(lang('alias_link_error'));
+        infoAlert(lang('alias_link_error'));
         $("#alias").focus();
         return false;
     }
@@ -175,42 +262,20 @@ function checkform() {
 function checkalias() {
     var a = $.trim($("#alias").val());
     if (1 == isalias(a)) {
-        $("#alias_msg_hook").html('<span id="input_error">' + lang('alias_invalid_chars') + '</span>');
+        $("#alias_msg_hook").html('<span id="input_error">'+ lang('alias_invalid_chars') +'</span>');
     } else if (2 == isalias(a)) {
-        $("#alias_msg_hook").html('<span id="input_error">' + lang('alias_digital') + '</span>');
+        $("#alias_msg_hook").html('<span id="input_error">'+ lang('alias_digital') +'</span>');
     } else if (3 == isalias(a)) {
-        $("#alias_msg_hook").html('<span id="input_error">' + lang('alias_format_must_be') + '</span>');
+        $("#alias_msg_hook").html('<span id="input_error">'+ lang('alias_format_must_be') +'</span>');
     } else if (4 == isalias(a)) {
-        $("#alias_msg_hook").html('<span id="input_error">' + lang('alias_system_conflict') + '</span>');
+        $("#alias_msg_hook").html('<span id="input_error">'+ lang('alias_system_conflict') +'</span>');
     } else {
         $("#alias_msg_hook").html('');
         $("#msg").html('');
     }
 }
 
-function insert_media_img(fileurl, imgsrc) {
-    Editor.insertValue('[![](' + imgsrc + ')](' + fileurl + ')\n\n');
-}
-
-function insert_media_video(fileurl) {
-    Editor.insertValue('<video class=\"video-js\" controls preload=\"auto\" width=\"100%\" data-setup=\'{"aspectRatio":"16:9"}\'> <source src="' + fileurl + '" type=\'video/mp4\' > </video>');
-}
-
-function insert_media_audio(fileurl) {
-    Editor.insertValue('<audio src="' + fileurl + '" preload="none" controls loop></audio>');
-}
-
-function insert_media(fileurl, filename) {
-    Editor.insertValue('[' + filename + '](' + fileurl + ')\n\n');
-}
-
-function insert_cover(imgsrc) {
-    $('#cover_image').attr('src', imgsrc);
-    $('#cover').val(imgsrc);
-    $('#cover_rm').show();
-}
-
-// act 1:auto save 2:save
+// act 1：Auto save 2：User manually saves
 function autosave(act) {
     const nodeid = "as_logid";
     const timeout = 60000;
@@ -229,7 +294,7 @@ function autosave(act) {
         }
         return;
     }
-    // Do not automatically save when editing published article
+    // Do not automatically save when editing published articles
     if (act == 1 && ishide == 'n') {
         return;
     }
@@ -238,15 +303,13 @@ function autosave(act) {
         setTimeout("autosave(1)", timeout);
         return;
     }
-    // Manual saving is not allowed when the last successful save time is less than one second
-    if ((new Date().getTime() - Cookies.get('em_saveLastTime')) < 1000 && act != 1) {
-        alert(lang('too_quick'));
-        return;
-    }
-    const btname = $("#savedf").val();
-    $("#savedf").val(lang('saving'));
+    // Manual saving is not allowed when the time from the last successful saving is less than one second
+    if ((new Date().getTime() - Cookies.get('em_saveLastTime')) < 1000 && act != 1) return;
+
+    const $savedf = $("#savedf");
+    const btname = $savedf.val();
+    $savedf.val(lang('saving')).attr("disabled", "disabled");
     $('title').text(lang('saving_in') + titleText);
-    $("#savedf").attr("disabled", "disabled");
     $.post(url, $("#addlog").serialize(), function (data) {
         data = $.trim(data);
         var isresponse = /.*autosave\_gid\:\d+\_.*/;
@@ -256,17 +319,19 @@ function autosave(act) {
             const d = new Date();
             const h = d.getHours();
             const m = d.getMinutes();
-            const s = d.getSeconds();
-            const tm = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-            $("#save_info").html(lang('saved_ok_time') + tm);
+            const tm = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+            $("#save_info").html(lang('saved_ok_time') + tm + " <a href=\"../?post=" + logid + "\" target=\"_blank\">预览文章</a>");
             $('title').text(lang('saved_ok') + titleText);
-            articleTextRecord = $("#addlog textarea[name=logcontent]").val(); // After the save is successful, replace the original text record value with the current text
-            Cookies.set('em_saveLastTime', new Date().getTime()); // Put (or update) the save success timestamp into a cookie
+            setTimeout(function () {
+                $('title').text(titleText);
+            }, 2000);
+            articleTextRecord = $("#addlog textarea[name=logcontent]").val(); // After saving successfully, replace the original value with the current text
+            Cookies.set('em_saveLastTime', new Date().getTime()); // Save the successful timestamp record (or update it) into the cookie
             $("#" + nodeid).val(logid);
             $("#savedf").attr("disabled", false).val(btname);
         } else {
             $("#savedf").attr("disabled", false).val(btname);
-/*vot*/     $("#save_info").html(lang('save_system_error')).addClass("alert-danger");
+            $("#save_info").html(lang('save_system_error')).addClass("alert-danger");
             $('title').text(lang('save_failed') + titleText);
         }
     });
@@ -275,28 +340,28 @@ function autosave(act) {
     }
 }
 
-// editor.md: Page AutoSave shortcut: Ctrl + S
+// Editor.md Editor of "Page" Auto Save Action of Ctrl+S Shortcut Keys
 const pagetitle = $('title').text();
 
 function pagesave() {
-/*vot*/ document.addEventListener('keydown', function (e) {  // Prevents the browser default action from autosave
+    document.addEventListener('keydown', function (e) {  // Prevent automatic saving of browser default actions
         if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
             e.preventDefault();
         }
     });
     let url = "page.php?action=save";
-    if ($("[name='pageid']").attr("value") < 0) return alert(lang('save_first'));
-/*vot*/ if (!$("[name='pagecontent']").html()) return alert(lang('content_empty'));
-/*vot*/ $('title').text(lang('saving_in') + ' ' + pagetitle);
+    if ($("[name='pageid']").attr("value") < 0) return infoAlert(lang('publish_page_first'));
+    if (!$("[name='pagecontent']").html()) return infoAlert(lang('page_content_empty'));
+    $('title').text(lang('saving_in') + pagetitle);
     $.post(url, $("#addlog").serialize(), function (data) {
-/*vot*/ $('title').text(lang('saved_ok') + pagetitle);
+        $('title').text(lang('saved_ok') + pagetitle);
         setTimeout(function () {
             $('title').text(pagetitle);
         }, 2000);
         pageText = $("textarea").text();
     }).fail(function () {
-/*vot*/ $('title').text(lang('save_failed') + pagetitle);
-/*vot*/ alert(lang('save_failed!'))
+        $('title').text(lang('save_failed') + pagetitle);
+        infoAlert(lang('save_failed!'))
     });
 }
 
@@ -312,40 +377,11 @@ $.fn.toggleClick = function () {
 };
 
 function removeHTMLTag(str) {
-    str = str.replace(/<\/?[^>]*>/g, ''); //Remove HTML tags
-    str = str.replace(/[ | ]*\n/g, '\n'); //Remove trailing whitespace
+    str = str.replace(/<\/?[^>]*>/g, ''); //Remove HTML tag
+    str = str.replace(/[ | ]*\n/g, '\n'); //Remove End of Line Blank
     str = str.replace(/ /ig, '');
     return str;
 }
-
-// Select all forms
-$(function () {
-    $('#checkAll').click(function (event) {
-        let tr_checkbox = $('table tbody tr').find('input[type=checkbox]');
-        tr_checkbox.prop('checked', $(this).prop('checked'));
-        event.stopPropagation();
-    });
-    // Click on the checkbox in each row of the table, and when the number of checkboxes selected in the table = the number of table rows, set the "checkAll" radio box in the header of the table to be selected, otherwise it is unselected
-    $('table tbody tr').find('input[type=checkbox]').click(function (event) {
-        let tbr = $('table tbody tr');
-        $('#checkAll').prop('checked', tbr.find('input[type=checkbox]:checked').length == tbr.length ? true : false);
-        event.stopPropagation();
-    });
-});
-
-// Select all cards
-$(function () {
-    $('#checkAllCard').click(function (event) {
-        let card_checkbox = $('.card-body').find('input[type=checkbox]');
-        card_checkbox.prop('checked', $(this).prop('checked'));
-        event.stopPropagation();
-    });
-    $('.card-body').find('input[type=checkbox]').click(function (event) {
-        let cards = $('.card-body');
-        $('#checkAllCard').prop('checked', cards.find('input[type=checkbox]:checked').length == cards.length ? true : false);
-        event.stopPropagation();
-    });
-});
 
 // editor.md js hook
 var queue = new Array();
@@ -357,7 +393,8 @@ var hooks = {
         if (typeof func == 'function') {
             queue[hook].push(func);
         }
-    }, doAction: function (hook, obj) {
+    },
+    doAction: function (hook, obj) {
         try {
             for (var i = 0; i < queue[hook].length; i++) {
                 queue[hook][i](obj);
@@ -367,11 +404,11 @@ var hooks = {
     }
 }
 
-// Paste upload image
+// Paste Upload Picture Function
 function imgPasteExpand(thisEditor) {
-/*vot*/    var listenObj = document.querySelector("textarea").parentNode  // Object to listen for
-/*vot*/    var postUrl = './media.php?action=upload';  // emlog image upload address
-/*vot*/    var emMediaPhpUrl = "./media.php?action=lib";  // The resource library address of emlog, which is used to asynchronously obtain the uploaded image data
+    var listenObj = document.querySelector("textarea").parentNode  // Object to listen to
+    var postUrl = './media.php?action=upload';  // Image upload address of emlog
+    var emMediaPhpUrl = "./media.php?action=lib";  //The resource library address of emlog, which is used to asynchronously obtain uploaded image data
 
     // By dynamically configuring the read-only mode, the original paste action of the editor is prevented and the cursor position is restored
     function preventEditorPaste() {
@@ -383,7 +420,7 @@ function imgPasteExpand(thisEditor) {
         thisEditor.setCursor({line: l, ch: c});
     }
 
-    // The editor replaces the text by the first few digits of the cursor position
+    // The editor replaces text with the first few digits of the cursor position
     function replaceByNum(text, num) {
         let l = thisEditor.getCursor().line;
         let c = thisEditor.getCursor().ch;
@@ -392,15 +429,15 @@ function imgPasteExpand(thisEditor) {
         thisEditor.replaceSelection(text);
     }
 
-    // Paste event fires
+    // Paste Event Trigger
     listenObj.addEventListener("paste", function (e) {
-/*vot*/        if ($('.editormd-dialog').css('display') == 'block') return;  // Exit if editor has dialog
+        if ($('.editormd-dialog').css('display') == 'block') return;  // Exit if the editor has a dialog box
         if (!(e.clipboardData && e.clipboardData.items)) return;
 
-/*vot*/        var pasteData = e.clipboardData || window.clipboardData; // Get the entire contents of the clipboard
-/*vot*/        pasteAnalyseResult = new Array;  // Used to store the results of traversal analysis
+        var pasteData = e.clipboardData || window.clipboardData; // Get all contents in the clipboard
+        pasteAnalyseResult = new Array;  // Used to store the results after traversal analysis
 
-/*vot*/        for (var i = 0; i < pasteData.items.length; i++) {  // Traverse the data in the analysis clipboard
+        for (var i = 0; i < pasteData.items.length; i++) {  // Traverse and analyze the data in the clipboard
             var item = pasteData.items[i];
 
             if ((item.kind == "file") && (item.type.match('^image/'))) {
@@ -408,19 +445,19 @@ function imgPasteExpand(thisEditor) {
                 if (imgData.size === 0) return;
                 pasteAnalyseResult['type'] = 'img';
                 pasteAnalyseResult['data'] = imgData;
-/*vot*/                break;  // When there is a picture in the pasteboard, jump out of the loop
+                break;  // Jump out of the loop when there are pictures on the clipboard
             }
             ;
         }
 
-/*vot*/        if (pasteAnalyseResult['type'] == 'img') {  // If there is a picture in the clipboard, upload the picture
+        if (pasteAnalyseResult['type'] == 'img') {  // If there is a picture in the clipboard, upload the picture
             preventEditorPaste();
             uploadImg(pasteAnalyseResult['data']);
             return;
         }
     }, false);
 
-    // Upload image
+    // Upload pictures
     function uploadImg(img) {
         var formData = new FormData();
         var imgName = lang('paste_upload') + new Date().getTime() + "." + img.name.split(".").pop();
@@ -432,7 +469,7 @@ function imgPasteExpand(thisEditor) {
                 var xhr = $.ajaxSettings.xhr();
                 if (xhr.upload) {
                     thisEditor.insertValue("....");
-                    xhr.upload.addEventListener('progress', function (e) {  // Show upload progress
+                    xhr.upload.addEventListener('progress', function (e) {  // Used to display upload progress
                         console.log(lang('progress') + e.loaded + ' / ' + e.total);
                         let percent = Math.floor(e.loaded / e.total * 100);
                         if (percent < 10) {
@@ -450,109 +487,224 @@ function imgPasteExpand(thisEditor) {
                 $.get(emMediaPhpUrl, function (resp) {
                     var image = resp.data.images[0];
                     if (image) {
-/*vot*/                 console.log(lang('result_ok'))
-/*vot*/                 replaceByNum(`[![](${image.media_icon})](${image.media_url})`, 10);  // The number 10 here corresponds to 'Uploading...100%' which is 10 characters
+                        console.log(lang('result_ok'))
+                        replaceByNum(`[![](${image.media_icon})](${image.media_url})`, 10);  // The number 10 here corresponds to "Uploading...100% ', 10 characters
                     } else {
-/*vot*/                 console.log(lang('get_result_fail'))
-/*vot*/                 alert(lang('get_result_fail'));
+                        console.log(lang('get_result_fail'))
+                        infoAlert(lang('get_result_fail'));
                     }
                 })
             }, error: function (result) {
-                alert(lang('upload_failed_error'));
+                infoAlert(lang('upload_failed_error'));
                 replaceByNum(lang('upload_failed_error'), 6);
             }
         })
     }
 }
 
-// Attach the paste upload image function to the js hook located in the article editor and page editor
+// Attach the Paste and Upload Picture function to the js hook located in the article editor and page editor
 hooks.addAction("loaded", imgPasteExpand);
 hooks.addAction("page_loaded", imgPasteExpand);
 
-function checkupdate() {
-    $("#upmsg").html("").addClass("spinner-border text-primary");
+function checkUpdate() {
+    const updateModal = $("#update-modal");
+    const updateModalLoading = $("#update-modal-loading");
+    const updateModalMsg = $("#update-modal-msg");
+    const updateModalChanges = $("#update-modal-changes");
+    const updateModalBtn = $("#update-modal-btn");
+
+    updateModal.modal('show');
+    updateModalLoading.addClass("spinner-border text-primary");
+
+    let rep_msg = "";
+    let rep_changes = "";
+    let rep_btn = "";
+
+    updateModalMsg.html(rep_msg);
+    updateModalChanges.html(rep_changes);
+    updateModalBtn.html(rep_btn);
+
     $.get("./upgrade.php?action=check_update", function (result) {
-        if (result.code == 1001) {
-/*vot*/            $("#upmsg").html(lang('emlog_not_registered') + ", <a href=\"auth.php\">" + lang('register') + "</a>").removeClass();
-        } else if (result.code == 1002) {
-/*vot*/            $("#upmsg").html(lang('is_latest_version')).removeClass();
-        } else if (result.code == 200) {
-/*vot*/            $("#upmsg").html(lang('new_ver_available') + result.data.version + ", <a href=\"https://emlog.in/docs/#/changelog\" target=\"_blank\">" + lang('check_for_new') + "</a>, <a id=\"doup\" href=\"javascript:doup('" + result.data.file + "', '" + result.data.sql + "');\">" + lang('update_now') + "</a>").removeClass();
+        if (result.code === 1001) {
+            rep_msg = lang('emlog_not_registered') + ", <a href=\"auth.php\">"+ lang('register') +"</a>";
+        } else if (result.code === 1002) {
+            rep_msg = lang('is_latest_version');
+        } else if (result.code === 200) {
+            rep_msg = `${lang('new_ver_available')}：<span class="text-danger">${result.data.version}</span> <br><br>`;
+            rep_changes = "<b>"+ lang('check_for_new') +"</b>:<br>" + result.data.changes;
+
+            // Check whether cdn_sql and cdn_file are empty
+            let sqlFile = result.data.cdn_sql || result.data.sql;
+            let fileFile = result.data.cdn_file || result.data.file;
+
+            rep_btn = `<hr><a href="javascript:doUp('${fileFile}','${sqlFile}');" id="upbtn" class="btn btn-success btn-sm">${lang('update_now')}</a>`;
         } else {
-/*vot*/            $("#upmsg").html(lang('check_failed')).removeClass();
+            rep_msg = lang('check_failed');
         }
+
+        updateModalLoading.removeClass();
+        updateModalMsg.html(rep_msg);
+        updateModalChanges.html(rep_changes);
+        updateModalBtn.html(rep_btn);
     });
 }
 
-function doup(source, upsql) {
-/*vot*/    $("#upmsg").html(lang('updating_now')).addClass("ajaxload");
-    $.get('./upgrade.php?action=update&source=' + source + "&upsql=" + upsql, function (data) {
-        $("#upmsg").removeClass();
-        if (data.match("succ")) {
-/*vot*/            $("#upmsg").html(lang('updated_ok'));
-        } else if (data.match("error_down")) {
-/*vot*/            $("#upmsg").html(lang('update_download_fail'));
-        } else if (data.match("error_zip")) {
-/*vot*/            $("#upmsg").html(lang('unzip_fail'));
-        } else if (data.match("error_dir")) {
-/*vot*/            $("#upmsg").html(lang('update_not_writable'));
+function doUp(source, upSQL) {
+    const updateModalLoading = $("#update-modal-loading");
+    const updateModalMsg = $("#update-modal-msg");
+    const updateModalChanges = $("#update-modal-changes");
+    const upmsg = $("#upmsg");
+    const upbtn = $("#upbtn");
+
+    updateModalLoading.addClass("spinner-border text-primary");
+    updateModalMsg.html(lang('updating_now'));
+    updateModalChanges.html("");
+
+    $.get(`./upgrade.php?action=update&source=${source}&upsql=${upSQL}`, function (data) {
+        upmsg.removeClass();
+        if (data.includes("succ")) {
+            upbtn.text(lang('refresh_the_page'));
+            upbtn.attr('href', './');
+            updateModalMsg.html(lang('updated_ok'));
+        } else if (data.includes("error_down")) {
+            updateModalMsg.html(lang('update_download_fail'));
+        } else if (data.includes("error_zip")) {
+            updateModalMsg.html(lang('unzip_fail'));
+        } else if (data.includes("error_dir")) {
+            updateModalMsg.html(lang('update_not_writable'));
         } else {
-/*vot*/            $("#upmsg").html(lang('update_fail'));
+            updateModalMsg.html(lang('update_fail'));
         }
+
+        updateModalLoading.removeClass();
     });
 }
 
-function loadTopAddons() {
-    $.ajax({
-        type: 'GET', url: './store.php?action=top', success: function (resp) {
-            $.each(resp.data, function (i, app) {
-                let insertBtnHtml;
-                let typeName = lang('template');
-                let storeUlr = './store.php?';
-                if (app.type === 'plu') {
-                    typeName = lang('plugin');
-                    storeUlr = './store.php?action=plu';
-                }
-                if (app.price > 0) {
-/*vot*/                    insertBtnHtml = lang('price') + app.price + lang('price_unit') + ' <a href="' + app.buy_url + '" target="_blank">' + lang('buy') + '</a>';
-                } else {
-/*vot*/                    insertBtnHtml = lang('price') + lang('free') + ' <a href="' + storeUlr + '&keyword=' + app.name + '">' + lang('go_store_install') + '</a>';
-                }
-                const cardHtml = '<div class="col-md-4">' + '<div class="card">' + '<a href="' + app.buy_url + '" target="_blank"><img class="card-img-top" style="max-height: 90px;" src="' + app.icon + '" alt="icon"/></a>' + '<div class="card-body">' + '<div class="card-text text-muted small">' + typeName + app.name + '</div>' + '<p class="card-text d-flex justify-content-between small">' + insertBtnHtml + '</p>' + '</div></div></div>';
-                $('#app-list').append(cardHtml);
-            });
+function initCheckboxState(id) {
+    const isChecked = localStorage.getItem(id) === 'true';
+    $('#' + id).prop('checked', isChecked);
+}
+
+function toggleCheckbox(id) {
+    const isChecked = $('#' + id).prop('checked');
+    localStorage.setItem(id, isChecked);
+}
+
+function initShortcutBar() {
+    var $bar = $('#shortcut-bar-container');
+    var $content = $('#shortcut-bar-content');
+    $bar.hover(
+        function() {
+            $content.css('width', '800px');
         },
+        function() {
+            $content.css('width', '0');
+        }
+    );
+}
+
+/**
+ * Encapsulate checkbox select all logic
+ * @param {string} checkAllSelector Select All button selector
+ * @param {string} containerSelector Checkbox container selector
+ */
+function initCheckboxSelectAll(checkAllSelector, containerSelector) {
+    $(checkAllSelector).click(function () {
+        let cardCheckboxes = $(containerSelector).find('input[type=checkbox]');
+        cardCheckboxes.prop('checked', $(this).prop('checked'));
+    });
+
+    $(containerSelector).find('input[type=checkbox]').click(function () {
+        let allChecked = true;
+        $(containerSelector).find('input[type=checkbox]').each(function () {
+            if (!$(this).prop('checked')) {
+                allChecked = false;
+                return false;
+            }
+        });
+        $(checkAllSelector).prop('checked', allChecked);
     });
 }
 
 $(function () {
-    // Check once the page is loaded
-    // Setting interface, if "automatically detect address" is set, set input to read-only to indicate that the item is invalid
-    if ($("#detect_url").prop("checked")) {
-        $("[name=blogurl]").attr("readonly", "readonly")
-    }
+    // Select All checkbox
+    initCheckboxSelectAll('#checkAllItem', '.checkboxContainer');
 
-    $("#detect_url").click(function () {
-        if ($(this).prop("checked")) {
-            $("[name=blogurl]").attr("readonly", "readonly")
-        } else {
-            $("[name=blogurl]").removeAttr("readonly")
-        }
-    })
-
-    // store app install
+    // App Store: app installation
     $('.installBtn').click(function (e) {
         e.preventDefault();
         let link = $(this);
         let down_url = link.data('url');
         let type = link.data('type');
-/*vot*/        link.text(lang('installing'));
-        link.prev(".installMsg").html("").addClass("spinner-border text-primary");
+        // link.text('安装中…');
+        emlog_msg('loading', lang('installing'), 1000, false)
+        link.css({"pointer-events": "none"})
+        // link.parent().prev(".installMsg").html("").addClass("spinner-border text-primary");
 
         let url = './store.php?action=install&type=' + type + '&source=' + down_url;
         $.get(url, function (data) {
-/*vot*/            link.text(lang('install_free'));
-            link.prev(".installMsg").html('<span class="text-danger">' + data + '</span>').removeClass("spinner-border text-primary");
+            // link.text('免费安装');
+            emMsgLoad.close()
+            link.css({"pointer-events": 'auto'})
+            if (data.indexOf('成功') !== -1 || data.indexOf('Success') !== -1 || data.indexOf('success') !== -1) {
+                emlog_msg('success', data, 4000)
+                link.html(data);
+            } else {
+                emlog_msg('error', data, 4000)
+            }
+            // link.parent().prev(".installMsg").html('<span class="text-danger">' + data + '</span>').removeClass("spinner-border text-primary");
         });
     });
+
+    // App Store: View app information
+    $('#appModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var name = button.data('name');
+        var url = button.data('url');
+        var buy_url = button.data('buy-url');
+        var modal = $(this);
+
+        modal.find('.modal-body').empty();
+        modal.find('.modal-title').html(name);
+        modal.find('.modal-buy-url').attr('href', buy_url);
+
+        var loadingSpinner = '<div class="spinner-border text-primary ml-3"><span class="sr-only">Loading...</span></div>';
+        modal.find('.modal-title').append(loadingSpinner);
+
+        var iframe = $('<iframe>', {
+            'class': 'iframe-content',
+            'src': url,
+            'frameborder': 0
+        });
+
+        iframe.on('load', function () {
+            $('.spinner-border').remove();
+        });
+
+        modal.find('.modal-body').append(iframe);
+    });
+
+    // Delete prompt
+    const alert_action_success = localStorage.getItem('alert_action_success')
+    if (localStorage.getItem('alert_action_success')) {
+        emlog_msg('success', alert_action_success + '成功')
+        localStorage.removeItem('alert_action_success');
+    }
 })
+
+let emMsgLoad
+function emlog_msg(type, info, closeTime = 1500, autoClose = true, closeButton = false, position = 'center') {
+    info = info ? info : 'Hello, EmlogPro!'
+    Qmsg.config({
+        showClose:closeButton,
+        timeout: closeTime,
+        position: position,
+        autoClose: autoClose,
+        html: true
+    })
+    if (type === 'loading') {
+        emMsgLoad = Qmsg[type](info);
+    } else {
+        Qmsg[type](info);
+    }
+}

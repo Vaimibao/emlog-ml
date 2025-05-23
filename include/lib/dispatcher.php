@@ -1,28 +1,30 @@
 <?php
+
 /**
  * router
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Dispatcher {
+class Dispatcher
+{
 
     static $_instance;
 
     /**
      * Request module
      */
-    private $_model = '';
+    public $_model = '';
 
     /**
      * Request module method
      */
-    private $_method = '';
+    public $_method = '';
 
     /**
      * Request parameters
      */
-    private $_params;
+    public $_params;
 
     /**
      * Routing table
@@ -32,16 +34,18 @@ class Dispatcher {
     /**
      * path
      */
-    private $_path;
+    public $_path;
 
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (!self::$_instance instanceof self) {
             self::$_instance = new self();
         }
         return self::$_instance;
     }
 
-    private function __construct() {
+    private function __construct()
+    {
         $this->_path = $this->setPath();
         $this->_routingTable = Option::getRoutingTable();
 
@@ -52,6 +56,41 @@ class Dispatcher {
                 $this->_model = $route['model'];
                 $this->_method = $route['method'];
                 $this->_params = $matches;
+
+                // Prioritize classification aliases
+                $alias = '';
+                $param = $this->_params;
+                if ($this->_model == 'Log_Controller' && $this->_method == 'displayContent') {
+                    $alias = isset($param[1]) ? $param[1] : '';
+                }
+                if ($this->_model == 'Log_Controller' && $this->_method == 'display') {
+                    $x = isset($param[0]) ? $param[0] : '';
+                    if (preg_match("/\/([^\/]+)\/page\/\d+/", $x, $matches)) {
+                        $alias = $matches[1];
+                    }
+                }
+                if ($alias && $alias !== 'post') {
+                    $Sort_Model = new Sort_Model();
+                    $r = $Sort_Model->getSortByAlias($alias);
+                    if ($r) {
+                        $this->_model = 'Sort_Controller';
+                        $this->_method = 'display';
+                        $this->_params = ['/sort/' . $alias, 'sort', $alias];
+                        $page = isset($param[2]) ? $param[2] : 0;
+                        if ($page) {
+                            $this->_params[3] = 'page/' . $page;
+                            $this->_params[4] = 'page';
+                            $this->_params[5] = $page;
+                        }
+                    }
+                }
+
+                // Set Page as Home Page
+                $homePageID = Option::get('home_page_id');
+                if ($this->_model == 'Log_Controller' && $this->_method == 'display' && $homePageID && !strpos($this->_path, 'posts')) {
+                    $this->_method = 'displayContent';
+                    $this->_params = ['/?post=' . $homePageID, 'post', $homePageID];
+                }
                 break;
             }
 
@@ -68,13 +107,15 @@ class Dispatcher {
         }
     }
 
-    public function dispatch() {
+    public function dispatch()
+    {
         $module = new $this->_model();
         $method = $this->_method;
         $module->$method($this->_params);
     }
 
-    public static function setPath() {
+    public static function setPath()
+    {
         if (isset($_SERVER['HTTP_X_REWRITE_URL'])) { // for iis
             $path = $_SERVER['HTTP_X_REWRITE_URL'];
         } elseif (isset($_SERVER['REQUEST_URI'])) {
@@ -86,15 +127,13 @@ class Dispatcher {
         }
 
         //for iis6 path is GBK
-/*vot*/ if(LANG == 'zh-CN') { // Only for Simplified Chinese!
-            if (isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'IIS') !== false) {
-                if (function_exists('mb_convert_encoding')) {
-                    $path = mb_convert_encoding($path, 'UTF-8', 'GBK');
-                } else {
-                    $path = @iconv('GBK', 'UTF-8', @iconv('UTF-8', 'GBK', $path)) == $path ? $path : @iconv('GBK', 'UTF-8', $path);
-                }
+        if (isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'IIS') !== false) {
+            if (function_exists('mb_convert_encoding')) {
+                $path = mb_convert_encoding($path, 'UTF-8', 'GBK');
+            } else {
+                $path = @iconv('GBK', 'UTF-8', @iconv('UTF-8', 'GBK', $path)) == $path ? $path : @iconv('GBK', 'UTF-8', $path);
             }
-/*vot*/ }
+        }
         //for ie6 header location
         $r = explode('#', $path, 2);
         $path = $r[0];

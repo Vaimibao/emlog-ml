@@ -1,13 +1,31 @@
 <?php
+
 /**
  * homepage & article detail
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Log_Controller {
-    function display($params) {
+class Log_Controller
+{
+    function index()
+    {
+        $action = Input::getStrVar('action');
+
+        if ($action == 'addlike') {
+            $this->addLike();
+        } elseif ($action == 'unlike') {
+            $this->unLike();
+        } elseif ($action == 'addcom') {
+            $this->addComment();
+        } elseif ($action == 'likecom') {
+            $this->likeComment();
+        }
+    }
+
+    function display($params)
+    {
         $Log_Model = new Log_Model();
         $CACHE = Cache::getInstance();
 
@@ -32,7 +50,8 @@ class Log_Controller {
         include View::getView('log_list');
     }
 
-    function displayContent($params) {
+    function displayContent($params)
+    {
         $comment_page = isset($params[4]) && $params[4] == 'comment-page' ? (int)$params[5] : 1;
 
         $Log_Model = new Log_Model();
@@ -59,10 +78,20 @@ class Log_Controller {
             }
         }
 
-        $logData = $Log_Model->getOneLogForHome($logid);
-        if ($logData === false) {
+        $logData = $Log_Model->getOneLogForHome($logid, true, true);
+        if (!$logData) {
             show_404_page();
         }
+
+        // Authors and administrators can preview draft articles and unapproved articles
+        if (($logData['hide'] === 'y' || $logData['checked'] === 'n' || $logData['timestamp'] > time()) && $logData['author'] != UID && !User::haveEditPermission()) {
+            show_404_page();
+        }
+
+        // tdk
+        $logData['site_title'] = $this->setSiteTitle($log_title_style, $logData['log_title'], $blogname, $site_title, $logid);
+        $logData['site_description'] = $this->setSiteDes($site_description, $logData['log_content'], $logData['excerpt'], $logid);
+        $logData['site_key'] = $this->setSiteKey($logData['tags'], $site_key, $logid);
 
         doMultiAction('article_content_echo', $logData, $logData);
 
@@ -70,66 +99,272 @@ class Log_Controller {
 
         // password
         if (!empty($password)) {
-            $postpwd = isset($_POST['logpwd']) ? addslashes(trim($_POST['logpwd'])) : '';
+            $postpwd = Input::postStrVar('logpwd');
             $cookiepwd = isset($_COOKIE['em_logpwd_' . $logid]) ? addslashes(trim($_COOKIE['em_logpwd_' . $logid])) : '';
             $Log_Model->AuthPassword($postpwd, $cookiepwd, $password, $logid);
         }
-        // tdk
-        $site_title = $this->setSiteTitle($log_title_style, $log_title, $blogname, $site_title);
-        $site_description = extractHtmlData($log_content, 90);
-        $site_key = $this->setSiteKey($tags, $site_key);
 
         //comments
         $Comment_Model = new Comment_Model();
-        $verifyCode = ISLOGIN == false && $comment_code == 'y' ? "<img src=\"" . BLOG_URL . "include/lib/checkcode.php\" id=\"captcha\" /><input name=\"imgcode\" type=\"text\" class=\"input\" size=\"5\" tabindex=\"5\" />" : '';
+        $verifyCode = ISLOGIN == false && $comment_code == 'y' ? "<img src=\"" . BLOG_URL . "include/lib/checkcode.php\" id=\"captcha\" class=\"captcha\" /><input name=\"imgcode\" type=\"text\" class=\"captcha_input\" size=\"5\" tabindex=\"5\" />" : '';
         $ckname = isset($_COOKIE['commentposter']) ? htmlspecialchars(stripslashes($_COOKIE['commentposter'])) : '';
         $ckmail = isset($_COOKIE['postermail']) ? htmlspecialchars($_COOKIE['postermail']) : '';
         $ckurl = isset($_COOKIE['posterurl']) ? htmlspecialchars($_COOKIE['posterurl']) : '';
         $comments = $Comment_Model->getComments($logid, 'n', $comment_page);
 
+        $Log_Model->updateViewCount($logid);
+
+        if (filter_var($link, FILTER_VALIDATE_URL)) {
+            doAction('log_direct_link', $link);
+            emDirect($link);
+        }
+
         include View::getView('header');
-        if ($type == 'blog') {
-            $Log_Model->updateViewCount($logid);
-            if (filter_var($link, FILTER_VALIDATE_URL)) {
-                emDirect($link);
-            }
+        if ($type === 'blog') {
             $neighborLog = $Log_Model->neighborLog($timestamp);
-            $tb = [];
-            $tb_url = '';//Compatible not delete references Templates
-            include View::getView('echo_log');
-        } elseif ($type == 'page') {
+            $template = !empty($template) && file_exists(TEMPLATE_PATH . $template . '.php') ? $template : 'echo_log';
+            include View::getView($template);
+        } elseif ($type === 'page') {
             $template = !empty($template) && file_exists(TEMPLATE_PATH . $template . '.php') ? $template : 'page';
             include View::getView($template);
         }
     }
 
-    private function setSiteKey($tagIdStr, $site_key) {
-        if (empty($tagIdStr)) {
-            return $site_key;
+    function addComment()
+    {
+        $name = Input::postStrVar('comname');
+        $content = Input::postStrVar('comment');
+        $mail = Input::postStrVar('commail');
+        $url = Input::postStrVar('comurl');
+        $avatar = Input::postStrVar('avatar');
+        $imgcode = strtoupper(Input::postStrVar('imgcode'));
+        $blogId = Input::postIntVar('gid', -1);
+        $pid = Input::postIntVar('pid');
+        $resp = Input::postStrVar('resp'); // eg: json (only support json now)
+        $uid = 0;
+        $ua = getUA();
+
+        if (ISLOGIN === true) {
+            $User_Model = new User_Model();
+            $user_info = $User_Model->getOneUser(UID);
+            $name = addslashes($user_info['name_orig']);
+            $mail = addslashes($user_info['email']);
+            $url = addslashes(BLOG_URL);
+            $uid = UID;
         }
+
+        if ($url && strncasecmp($url, 'http', 4)) {
+            $url = 'https://' . $url;
+        }
+
+        doAction('comment_post');
+
+        $Comment_Model = new Comment_Model();
+        $Log_Model = new Log_Model();
+
+        $log = $Log_Model->getDetail($blogId);
+        $Comment_Model->setCommentCookie($name, $mail, $url);
+        $err = '';
+
+        if (!ISLOGIN && Option::get('login_comment') === 'y') {
+            $err = lang('comment_error_comment_need_logged');
+        } elseif ($blogId <= 0 || empty($log)) {
+            $err = lang('comment_error_article_does_not_exist');
+        } elseif (Option::get('iscomment') == 'n' || $log['allow_remark'] == 'n') {
+            $err = lang('comment_error_comment_disabled');
+        } elseif (!User::haveEditPermission() && $Comment_Model->isCommentTooFast() === true) {
+            $err = lang('comment_error_flood_control');
+        } elseif (empty($name)) {
+            $err = lang('comment_error_name_enter');
+        } elseif (strlen($name) > 100) {
+            $err = lang('comment_error_name_invalid');
+        } elseif ($mail !== '' && !checkMail($mail)) {
+            $err = lang('comment_error_email_invalid');
+        } elseif (empty($content)) {
+            $err = lang('comment_error_empty');
+        } elseif (strlen($content) > 60000) {
+            $err = lang('comment_error_content_invalid');
+        } elseif (ISLOGIN === false && Option::get('comment_code') == 'y' && session_start() && (empty($imgcode) || $imgcode !== $_SESSION['code'])) {
+            $err = lang('comment_error_captcha_invalid');
+        } elseif (empty($ua) || preg_match('/bot|crawler|spider|robot|crawling/i', $ua)) {
+            $err = lang('comment_error_abnormal_request');
+        }
+
+        if ($err) {
+            $resp === 'json' ? Output::error($err) : emMsg($err);
+        }
+        $r = $Comment_Model->addComment($uid, $name, $content, $mail, $url, $avatar, $blogId, $pid);
+        $cid = isset($r['cid']) ? $r['cid'] : 0;
+        $hide = isset($r['hide']) ? $r['hide'] : '';
+
+        $_SESSION['code'] = null;
+        notice::sendNewCommentMail($content, $blogId, $pid);
+
+        if ($hide === 'y') {
+            $msg = lang('comment_wait_approve');
+            $resp === 'json' ? Output::ok($msg) : emMsg($msg);
+        }
+        if ($resp === 'json') {
+            Output::ok(['cid' => $cid]);
+        } else {
+            emDirect(Url::log($blogId) . '#' . $cid);
+        }
+    }
+
+    function likeComment()
+    {
+        $cid = Input::postIntVar('cid');
+        $ua = getUA();
+        $ip = getIp();
+
+        $Comment_Model = new Comment_Model();
+        $c = $Comment_Model->getOneComment($cid);
+
+        $err = '';
+
+        if (empty($c)) {
+            $err = lang('comment_error_comment_does_not_exist');
+        } elseif (empty($ip) || empty($ua) || preg_match('/bot|crawler|spider|robot|crawling/i', $ua)) {
+            $err = lang('comment_error_abnormal_request');
+        }
+
+        if ($err) {
+            Output::error($err);
+        }
+        $Comment_Model->likeComment($cid);
+
+        Output::ok();
+    }
+
+    function addLike()
+    {
+        $name = Input::postStrVar('name');
+        $avatar = Input::postStrVar('avatar');
+        $blogId = Input::postIntVar('gid', -1);
+        $ua = getUA();
+        $ip = getIp();
+        $uid = 0;
+
+        if (ISLOGIN === true) {
+            $User_Model = new User_Model();
+            $user_info = $User_Model->getOneUser(UID);
+            $name = addslashes($user_info['name_orig']);
+            $uid = UID;
+        }
+
+        doAction('like_post');
+
+        $Like_Model = new Like_Model();
+        $Log_Model = new Log_Model();
+
+        $log = $Log_Model->getDetail($blogId);
+        $err = '';
+
+        if ($blogId <= 0 || empty($log)) {
+            $err = lang('comment_error_article_does_not_exist');
+        } elseif ($Like_Model->isLiked($blogId, $uid, $ip) === true) {
+            $err = lang('already_liked');
+        } elseif (!User::haveEditPermission() && $Like_Model->isTooFast() === true) {
+            $err = lang('too_frequent_operation');
+        } elseif (strlen($name) > 100) {
+            $err = lang('nickname_is_too_long');
+        } elseif (empty($ip) || empty($ua) || preg_match('/bot|crawler|spider|robot|crawling/i', $ua)) {
+            $err = lang('comment_error_abnormal_request');
+        }
+
+        if ($err) {
+            Output::error($err);
+        }
+        $r = $Like_Model->addLike($uid, $name, $avatar, $blogId, $ip, $ua);
+        $id = isset($r['id']) ? $r['id'] : 0;
+
+        Output::ok(['id' => $id]);
+    }
+
+    function unLike()
+    {
+        $uid = 0;
+
+        if (ISLOGIN === true) {
+            $User_Model = new User_Model();
+            $user_info = $User_Model->getOneUser(UID);
+            $uid = UID;
+        }
+
+        $blogId = Input::postIntVar('gid');
+        $Like_Model = new Like_Model();
+        $r = $Like_Model->unLike($uid, $blogId);
+
+        if ($r === false) {
+            Output::error(lang('cancel_failed'));
+        }
+
+        Output::ok();
+    }
+
+    private function setSiteDes($siteDescription, $logContent, $excerpt, $logId)
+    {
+        if ($this->isHomePage($logId)) {
+            return $siteDescription;
+        }
+
+        if ($excerpt) {
+            return extractHtmlData($excerpt, 200);
+        }
+
+        return extractHtmlData($logContent, 200);
+    }
+
+    private function setSiteKey($tagIdStr, $siteKey, $logId)
+    {
+        if ($this->isHomePage($logId)) {
+            return $siteKey;
+        }
+
+        if (empty($tagIdStr)) {
+            return $siteKey;
+        }
+
         $tagNames = '';
-        $tag_model = new Tag_Model();
+        $tagModel = new Tag_Model();
         $ids = explode(',', $tagIdStr);
+
         if ($ids) {
-            $tags = $tag_model->getNamesFromIds($ids);
+            $tags = $tagModel->getNamesFromIds($ids);
             $tagNames = implode(',', $tags);
         }
+
         return $tagNames;
     }
 
-    private function setSiteTitle($log_title_style, $log_title, $blogname, $site_title) {
-        switch ($log_title_style) {
+    private function setSiteTitle($logTitleStyle, $logTitle, $blogName, $siteTitle, $logId)
+    {
+        if ($this->isHomePage($logId)) {
+            return $siteTitle ?: $blogName;
+        }
+
+        switch ($logTitleStyle) {
             case '0':
-                $article_seo_title = $log_title;
+                $articleSeoTitle = $logTitle;
                 break;
             case '1':
-                $article_seo_title = $log_title . ' - ' . $blogname;
+                $articleSeoTitle = $logTitle . ' - ' . $blogName;
                 break;
             case '2':
             default:
-                $article_seo_title = $log_title . ' - ' . $site_title;
+                $articleSeoTitle = $logTitle . ' - ' . $siteTitle;
                 break;
         }
-        return $article_seo_title;
+
+        return $articleSeoTitle;
+    }
+
+    private function isHomePage($logId)
+    {
+        $homePageId = Option::get('home_page_id');
+        if ($homePageId && $homePageId == $logId) {
+            return true;
+        }
+        return false;
     }
 }

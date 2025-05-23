@@ -3,7 +3,7 @@
  * MySQLi Database Class
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 class MySqlii {
@@ -24,7 +24,6 @@ class MySqlii {
     private $result;
 
     /**
-     * Internal object instance
      * @var object MySql
      */
     private static $instance;
@@ -79,10 +78,10 @@ class MySqlii {
             emMsg(lang('db_error_name'));
         }
         if (!$ignore_err && 1115 == $this->getErrNo()) {
-/*vot*/            emMsg(lang('utf8mb4_not_support'));
+            emMsg(lang('utf8mb4_not_support'));
         }
         if (!$ignore_err && !$this->result) {
-/*vot*/            emMsg(lang('db_sql_error') . ": $sql<br /><br />error: " . $this->getErrNo() . ' , ' . $this->getError());
+            emMsg("$sql<br /><br />error: " . $this->getErrNo() . ' , ' . $this->getError());
         } else {
             return $this->result;
         }
@@ -90,6 +89,15 @@ class MySqlii {
 
     public function fetch_array(mysqli_result $query, $type = MYSQLI_ASSOC) {
         return $query->fetch_array($type);
+    }
+
+    public function fetch_all($sql, $fetchMode = MYSQLI_ASSOC) {
+        $this->result = $this->query($sql);
+        $data = [];
+        while ($row = $this->fetch_array($this->result, $fetchMode)) {
+            $data[] = $row;
+        }
+        return $data;
     }
 
     public function once_fetch_array($sql) {
@@ -134,7 +142,7 @@ class MySqlii {
         return $this->conn->affected_rows;
     }
 
-    public function getMysqlVersion() {
+    public function getVersion() {
         return $this->conn->server_info;
     }
 
@@ -150,7 +158,7 @@ class MySqlii {
     }
 
     public function listTables() {
-        $rs = $this->query("SHOW TABLES FROM " . DB_NAME);
+        $rs = $this->query(sprintf("SHOW TABLES FROM `%s`", DB_NAME));
         $tables = [];
         while ($row = $this->fetch_row($rs)) {
             $tables[] = isset($row[0]) ? $row[0] : '';

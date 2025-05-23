@@ -3,7 +3,7 @@
  * Data storage class
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 class StorageType {
@@ -364,12 +364,13 @@ class Storage {
      * @return string Type name
      */
     public function _filterType($type) {
+        if (!$type) {
+            return self::$default_storage_type;
+        }
         $type = strtolower(trim($type));
-
         if (!in_array($type, self::$available_storage_type)) {
             $type = self::$default_storage_type;
         }
-
         return $type;
     }
 }

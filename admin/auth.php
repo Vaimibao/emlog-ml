@@ -2,7 +2,7 @@
 /**
  * register emlog
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -20,13 +20,13 @@ if (empty($action)) {
 }
 
 if ($action === 'auth') {
-    $emkey = $_POST['emkey'] ? addslashes(trim($_POST['emkey'])) : '';
+    $emkey = Input::postStrVar('emkey');
 
     if (empty($emkey)) {
         emDirect("./auth.php?error_b=1");
     }
 
-    $r = Register::checkEmKey($emkey);
+    $r = Register::doReg($emkey);
 
     if ($r === false) {
         emDirect("./auth.php?error_b=1");
@@ -38,5 +38,5 @@ if ($action === 'auth') {
 
     Option::updateOption("emkey", $emkey);
     $CACHE->updateCache('options');
-    emDirect("./auth.php?active_reg=1");
+    emDirect("./auth.php");
 }

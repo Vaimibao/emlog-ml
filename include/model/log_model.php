@@ -1,23 +1,29 @@
 <?php
+
 /**
  * article and page model
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Log_Model {
+class Log_Model
+{
 
     private $db;
     private $Parsedown;
     private $table;
     private $table_user;
+    private $table_sort;
+    private $table_comment;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = Database::getInstance();
         $this->table = DB_PREFIX . 'blog';
         $this->table_user = DB_PREFIX . 'user';
         $this->table_sort = DB_PREFIX . 'sort';
+        $this->table_comment = DB_PREFIX . 'comment';
         $this->Parsedown = new Parsedown();
         $this->Parsedown->setBreaksEnabled(true); //automatic line wrapping
     }
@@ -25,7 +31,8 @@ class Log_Model {
     /**
      * create article
      */
-    public function addlog($logData) {
+    public function addlog($logData)
+    {
         $kItem = $dItem = [];
         foreach ($logData as $key => $data) {
             $kItem[] = $key;
@@ -40,7 +47,10 @@ class Log_Model {
     /**
      * update article
      */
-    public function updateLog($logData, $blogId, $uid = UID) {
+    public function updateLog($logData, $blogId, $uid = UID)
+    {
+        $blogId = (int)$blogId;
+        $uid = (int)$uid;
         $author = User::haveEditPermission() ? '' : 'and author=' . $uid;
         $Item = [];
         foreach ($logData as $key => $data) {
@@ -50,7 +60,9 @@ class Log_Model {
         $this->db->query("UPDATE $this->table SET $upStr WHERE gid=$blogId $author");
     }
 
-    public function getCount($uid = UID) {
+    public function getCount($uid = UID)
+    {
+        $uid = (int)$uid;
         $sql = sprintf("SELECT count(*) as num FROM $this->table WHERE author=%d AND type='%s'", $uid, 'blog');
         $res = $this->db->once_fetch_array($sql);
         return $res['num'];
@@ -65,23 +77,28 @@ class Log_Model {
      * @param string $type
      * @return int
      */
-    public function getLogNum($hide = 'n', $condition = '', $type = 'blog', $spot = 0) {
+    public function getLogNum($hide = 'n', $condition = '', $type = 'blog', $spot = 0)
+    {
         $hide_state = $hide ? "and hide='$hide'" : '';
 
         if ($spot == 0) {
             $now = time();
             $date_state = "and date<=$now";
+            $check_state = "and checked='y'";
             $author = '';
         } else {
             $date_state = '';
+            $check_state = '';
             $author = User::haveEditPermission() ? '' : 'and author=' . UID;
         }
 
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table WHERE type='$type' $date_state $hide_state $author $condition");
+        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table WHERE type='$type' $date_state $hide_state $check_state $author $condition");
         return $data['total'];
     }
 
-    public function getPostCountByUid($uid, $time = 0) {
+    public function getPostCountByUid($uid, $time = 0)
+    {
+        $uid = (int)$uid;
         $date = '';
         if ($time) {
             $date = "and date > $time";
@@ -91,7 +108,9 @@ class Log_Model {
         return $data['total'];
     }
 
-    public function getOneLogForAdmin($blogId) {
+    public function getOneLogForAdmin($blogId)
+    {
+        $blogId = (int)$blogId;
         $author = User::haveEditPermission() ? '' : 'AND author=' . UID;
         $sql = "SELECT * FROM $this->table WHERE gid=$blogId $author";
         $res = $this->db->query($sql);
@@ -110,21 +129,83 @@ class Log_Model {
         return false;
     }
 
-    public function getDetail($blogId) {
+    /**
+     * Get article details
+     *
+     * @param int $blogId ID of the article to be retrieved.
+     * @return array|false An array of article record, or false if not found.
+     */
+    public function getDetail($blogId)
+    {
+        $blogId = (int)$blogId;
+        if (empty($blogId)) {
+            return false;
+        }
         $sql = "SELECT t1.*, t2.sid, t2.sortname, t2.alias as sort_alias FROM $this->table t1 LEFT JOIN $this->table_sort t2 ON t1.sortid=t2.sid WHERE t1.gid=$blogId";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
         if ($row) {
+            $row['fields'] = Field::getFields($blogId);
             return $row;
         }
         return false;
     }
 
     /**
-     * get single article
+     * Get article details in batch
+     *
+     * @param array $blogIds IDs of articles to be retrieved.
+     * @return array|false An array of article records, or false if no records are found.
      */
-    public function getOneLogForHome($blogId) {
-        $sql = "SELECT * FROM $this->table WHERE gid=$blogId AND hide='n' AND checked='y'";
+    public function getDetails($blogIds)
+    {
+        if (empty($blogIds) || !is_array($blogIds)) {
+            return false;
+        }
+        $blogIdsString = implode(',', $blogIds);
+        $sql = "SELECT t1.*, t2.sid, t2.sortname, t2.alias as sort_alias FROM $this->table t1 LEFT JOIN $this->table_sort t2 ON t1.sortid=t2.sid WHERE t1.gid IN ($blogIdsString)";
+        $res = $this->db->query($sql);
+        $rows = array();
+        while ($row = $this->db->fetch_array($res)) {
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * Query all sub articles
+     *
+     * @param int $parentID The ID of the parent to filter logs.
+     * @return array|false An array of logs matching the parent ID, or false if the parent ID is invalid.
+     */
+    public function getLogsByParentID($parentID)
+    {
+        $parentID = (int)$parentID;
+        if (empty($parentID)) {
+            return false;
+        }
+        $sql = "SELECT t1.*, t2.sid, t2.sortname, t2.alias as sort_alias FROM $this->table t1 LEFT JOIN $this->table_sort t2 ON t1.sortid=t2.sid WHERE t1.parent_id=$parentID";
+        $res = $this->db->query($sql);
+        $rows = array();
+        while ($row = $this->db->fetch_array($res)) {
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * get single article
+     * @param $blogId
+     * @param bool $ignoreHide Ignore hidden state
+     * @param bool $ignoreChecked Ignore audit status
+     * @return array|false
+     */
+    public function getOneLogForHome($blogId, $ignoreHide = false, $ignoreChecked = false)
+    {
+        $blogId = (int)$blogId;
+        $hide = $ignoreHide ? "" : "AND hide='n'";
+        $checked = $ignoreChecked ? "" : "AND checked='y'";
+        $sql = "SELECT * FROM $this->table WHERE gid=$blogId $hide $checked";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
 
@@ -142,25 +223,32 @@ class Log_Model {
             'author'       => $row['author'],
             'log_cover'    => $row['cover'] ? getFileUrl($row['cover']) : '',
             'excerpt'      => $this->Parsedown->text($row['excerpt']),
+            'excerpt_raw'  => $row['excerpt'],
             'log_content'  => $this->Parsedown->text($row['content']),
+            'content_raw'  => $row['content'],
             'views'        => (int)$row['views'],
             'comnum'       => (int)$row['comnum'],
+            'like_count'   => (int)$row['like_count'],
             'top'          => $row['top'],
             'sortop'       => $row['sortop'],
+            'hide'         => $row['hide'],
+            'checked'      => $row['checked'],
             'attnum'       => (int)$row['attnum'],
             'allow_remark' => Option::get('iscomment') == 'y' ? $row['allow_remark'] : 'n',
             'password'     => $row['password'],
             'template'     => $row['template'],
             'link'         => $row['link'],
             'tags'         => $row['tags'],
+            'fields'       => Field::getFields($blogId),
+            'parent_id'    => (int)$row['parent_id'],
         ];
     }
 
-    public function getLogsForAdmin($condition = '', $hide_state = '', $page = 1, $type = 'blog') {
-        $perpage_num = Option::get('admin_perpage_num');
+    public function getLogsForAdmin($condition = '', $hide_state = '', $page = 1, $type = 'blog', $perpage_num = 20)
+    {
         $start_limit = !empty($page) ? ($page - 1) * $perpage_num : 0;
-/*vot*/        $author = User::haveEditPermission() ? '' : 'AND author=' . UID;
-/*vot*/        $hide_state = $hide_state ? "AND hide='$hide_state'" : '';
+        $author = User::haveEditPermission() ? '' : 'and author=' . UID;
+        $hide_state = $hide_state ? "and hide='$hide_state'" : '';
         $limit = "LIMIT $start_limit, " . $perpage_num;
         $sql = "SELECT * FROM $this->table WHERE type='$type' $author $hide_state $condition $limit";
         $res = $this->db->query($sql);
@@ -168,13 +256,14 @@ class Log_Model {
         while ($row = $this->db->fetch_array($res)) {
             $row['timestamp'] = $row['date'];
             $row['date'] = date("Y-m-d H:i", $row['date']);
-            $row['title'] = !empty($row['title']) ? htmlspecialchars($row['title']) : lang('no_title');
+            $row['title'] = !empty($row['title']) ? htmlspecialchars($row['title']) : '无标题';
             $logs[] = $row;
         }
         return $logs;
     }
 
-    public function getLogsForHome($condition = '', $page = 1, $perPageNum = 10) {
+    public function getLogsForHome($condition = '', $page = 1, $perPageNum = 10)
+    {
         $start_limit = !empty($page) ? ($page - 1) * $perPageNum : 0;
         $limit = $perPageNum ? "LIMIT $start_limit, $perPageNum" : '';
         $now = time();
@@ -195,6 +284,7 @@ class Log_Model {
             $row['attachment'] = '';
             $row['tag'] = '';
             $row['tbcount'] = 0;
+            $row['fields'] = Field::getFields($row['gid']);
             $logs[] = $row;
         }
         return $logs;
@@ -203,7 +293,8 @@ class Log_Model {
     /**
      * get rss article list
      */
-    public function getLogsForRss($perPageNum = 10) {
+    public function getLogsForRss($perPageNum = 10)
+    {
         if ($perPageNum <= 0) {
             return [];
         }
@@ -224,75 +315,111 @@ class Log_Model {
                 } else {
                     $re['content'] = extractHtmlData($re['content'], 330);
                 }
-                $re['content'] .= ' <a href="' . Url::log($re['id']) . '">' . lang('read_more') . '</a>';
+                $re['content'] .= ' <a href="' . Url::log($re['id']) . '">阅读全文&gt;&gt;</a>';
             }
             $d[] = $re;
         }
         return $d;
     }
 
+    /**
+     * Get the page number of the article
+     * @param $date
+     * @param $pageSize
+     * @param $type
+     * @return false|float
+     */
+    public function getPageOffset($date, $type = 'blog')
+    {
+        $pageSize = Option::get('admin_article_perpage_num');
+        if ((int)$pageSize <= 0) {
+            return 1;
+        }
+        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table WHERE type='$type' AND hide='n' AND (date >= $date OR top = 'y' OR sortop = 'y')");
+        $count = $data['total'];
+        return ceil($count / $pageSize);
+    }
 
-    public function getAllPageList() {
+    public function getAllPageList()
+    {
         $sql = "SELECT * FROM $this->table WHERE type='page'";
         $res = $this->db->query($sql);
         $pages = [];
         while ($row = $this->db->fetch_array($res)) {
             $row['date'] = date("Y-m-d H:i", $row['date']);
-            $row['title'] = !empty($row['title']) ? htmlspecialchars($row['title']) : lang('no_title');
+            $row['title'] = !empty($row['title']) ? htmlspecialchars($row['title']) : '无标题';
             $pages[] = $row;
         }
         return $pages;
     }
 
-    public function deleteLog($blogId) {
+    public function deleteLog($blogId)
+    {
+        $blogId = (int)$blogId;
         $this->checkEditable($blogId);
-/*vot*/        $author = User::haveEditPermission() ? '' : 'AND author=' . UID;
-/*vot*/        $this->db->query("DELETE FROM $this->table WHERE gid=$blogId $author");
+        $detail = $this->getDetail($blogId);
+        $author = User::haveEditPermission() ? '' : 'and author=' . UID;
+        $this->db->query("DELETE FROM $this->table where gid=$blogId $author");
         if ($this->db->affected_rows() < 1) {
             emMsg(lang('no_permission'), './');
         }
         // comment
-        $this->db->query("DELETE FROM " . DB_PREFIX . "comment where gid=$blogId");
+        $this->db->query("DELETE FROM $this->table_comment where gid=$blogId");
         // tag
-        $this->db->query("UPDATE " . DB_PREFIX . "tag SET gid= REPLACE(gid,',$blogId,',',') WHERE gid LIKE '%" . $blogId . "%' ");
-        $this->db->query("DELETE FROM " . DB_PREFIX . "tag WHERE gid=',' ");
+        if (!empty($detail['tags'])) {
+            $TagModel = new Tag_Model();
+            $tags = explode(',', $detail['tags']);
+            foreach ($tags as $tag) {
+                $TagModel->removeBlogIdFromTag($tag, $blogId);
+            }
+        }
     }
 
-    public function hideSwitch($blogId, $state) {
+    public function hideSwitch($blogId, $state)
+    {
+        $blogId = (int)$blogId;
         $author = User::haveEditPermission() ? '' : 'and author=' . UID;
         $this->db->query("UPDATE $this->table SET hide='$state' WHERE gid=$blogId $author");
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET hide='$state' WHERE gid=$blogId");
+        $this->db->query("UPDATE $this->table_comment SET hide='$state' WHERE gid=$blogId");
         $Comment_Model = new Comment_Model();
         $Comment_Model->updateCommentNum($blogId);
     }
 
-    public function checkSwitch($blogId, $state) {
+    public function checkSwitch($blogId, $state)
+    {
+        $blogId = (int)$blogId;
         $this->db->query("UPDATE $this->table SET checked='$state' WHERE gid=$blogId");
         $state = $state == 'y' ? 'n' : 'y';
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET hide='$state' WHERE gid=$blogId");
+        $this->db->query("UPDATE $this->table_comment SET hide='$state' WHERE gid=$blogId");
         $Comment_Model = new Comment_Model();
         $Comment_Model->updateCommentNum($blogId);
     }
 
-    public function unCheck($blogId, $feedback) {
+    public function unCheck($blogId, $feedback)
+    {
+        $blogId = (int)$blogId;
         $this->db->query("UPDATE $this->table SET checked='n', feedback='$feedback' WHERE gid=$blogId");
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET hide='y' WHERE gid=$blogId");
+        $this->db->query("UPDATE $this->table_comment SET hide='y' WHERE gid=$blogId");
         $Comment_Model = new Comment_Model();
         $Comment_Model->updateCommentNum($blogId);
     }
 
-    public function updateViewCount($blogId) {
+    public function updateViewCount($blogId)
+    {
+        $blogId = (int)$blogId;
         $this->db->query("UPDATE $this->table SET views=views+1 WHERE gid=$blogId");
     }
 
-    public function isRepeatPost($title, $time) {
-/*vot*/        $sql = "SELECT gid FROM $this->table WHERE title='$title' AND date='$time' LIMIT 1";
+    public function isRepeatPost($title, $time)
+    {
+        $sql = "SELECT gid FROM $this->table WHERE title='$title' and date='$time' LIMIT 1";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
         return isset($row['gid']) ? (int)$row['gid'] : false;
     }
 
-    public function neighborLog($date) {
+    public function neighborLog($date)
+    {
         $now = time();
         $date_state = "and date<=$now";
         $neighborlog = [];
@@ -307,13 +434,15 @@ class Log_Model {
         return $neighborlog;
     }
 
-    public function getRandLog($num) {
+    public function getRandLog($num)
+    {
         global $CACHE;
         $now = time();
+        $num = (int)$num;
         $date_state = "and date<=$now";
         $sta_cache = $CACHE->readCache('sta');
         $lognum = $sta_cache['lognum'];
-        $start = $lognum > $num ? mt_rand(0, $lognum - $num) : 0;
+        $start = $lognum > $num ? em_rand(0, $lognum - $num) : 0;
         $sql = "SELECT gid,title FROM $this->table WHERE hide='n' and checked='y' and type='blog' $date_state LIMIT $start, $num";
         $res = $this->db->query($sql);
         $logs = [];
@@ -325,21 +454,30 @@ class Log_Model {
         return $logs;
     }
 
-    public function getHotLog($num) {
+    public function getHotLog($num)
+    {
         $now = time();
+        $num = (int)$num;
         $date_state = "and date<=$now";
-        $sql = "SELECT gid,title FROM $this->table WHERE hide='n' and checked='y' and type='blog' $date_state ORDER BY views DESC, comnum DESC LIMIT 0, $num";
+        $sql = "SELECT * FROM $this->table WHERE hide='n' and checked='y' and type='blog' $date_state ORDER BY views DESC, comnum DESC LIMIT 0, $num";
         $res = $this->db->query($sql);
         $logs = [];
         while ($row = $this->db->fetch_array($res)) {
             $row['gid'] = (int)$row['gid'];
             $row['title'] = htmlspecialchars($row['title']);
+            $row['cover'] = $row['cover'] ? getFileUrl($row['cover']) : '';
+            $row['log_url'] = Url::log($row['gid']);
             $logs[] = $row;
         }
         return $logs;
     }
 
-    public function checkAlias($alias, $logalias_cache, $logid) {
+    // Check the article alias. If the alias is repeated, it will be renamed to xxx-1 format
+    public function checkAlias($alias, $logalias_cache, $logid)
+    {
+        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $alias)) {
+            return '';
+        }
         static $i = 2;
         $key = array_search($alias, $logalias_cache);
         if (false !== $key && $key != $logid) {
@@ -354,19 +492,21 @@ class Log_Model {
         return $alias;
     }
 
-    public function authPassword($postPwd, $cookiePwd, $logPwd, $logid) {
+    public function authPassword($postPwd, $cookiePwd, $logPwd, $logid)
+    {
         $url = BLOG_URL;
         $pwd = $cookiePwd ?: $postPwd;
         if ($pwd !== addslashes($logPwd)) {
             if (view::isTplExist('pw')) {
                 include view::getView('pw');
             } else {
-/*vot*/                $page_pass = lang('page_password_enter');
-/*vot*/                $submit_pass = lang('submit_password');
-/*vot*/                $back = lang('back_home');
+                $lang = LANG;
+                $page_pass = lang('page_password_enter');
+                $submit_pass = lang('submit_password');
+                $back = lang('back_home');
                 echo <<<EOT
 <!doctype html>
-<html>
+<html lang="$lang">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -394,7 +534,8 @@ EOT;
         setcookie('em_logpwd_' . $logid, $logPwd);
     }
 
-    public function checkEditable($gid) {
+    public function checkEditable($gid)
+    {
         if (User::haveEditPermission()) {
             return;
         }

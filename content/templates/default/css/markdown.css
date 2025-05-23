@@ -1,5 +1,5 @@
 /**
- * markdown output style
+ * markdown 输出样式
  */
 
 .markdown {
@@ -113,42 +113,47 @@
 .markdown table {
     display: block;
     width: 100%;
+    max-width: 100%;
     overflow: auto;
-    word-break: normal;
     word-break: keep-all;
     border-collapse: collapse;
-    margin-bottom: 16px
+    margin-bottom: 16px;
+    table-layout: auto;
 }
 
 .markdown thead tr {
-    background-color: #F8F8F8
+    background-color: var(--bodyBground)
 }
 
 .markdown td {
     padding: 6px 13px;
-    border: 1px solid #ddd
+    border: 1px solid var(--borderColor)
 }
 
 .markdown th {
     padding: 6px 13px;
-    border: 1px solid #ddd
+    border: 1px solid var(--borderColor)
 }
 
 .markdown table tr:nth-child(even) {
-    background: #f8f8f8
+    background: var(--bodyBground)
 }
 
-.markdown code {
-    background: #f6f6f6;
+/* 选择不在 <pre> 标签中的 <code> 元素 */
+.markdown code:not(pre > code) {
     border-radius: 3px;
     font-size: 14px;
-    margin-right: 4px
+    margin-right: 4px;
+    color: var(--aHoverColor);
+    background: var(--borderColor);
+    padding: 2px 4px;
 }
 
 .markdown pre {
     padding: 10px;
-    border: 1px solid #ddd;
-    background: #f6f6f6;
+    border-radius: 5px;
+    border: 1px solid var(--borderColor);
+    background: var(--borderColor);
     overflow: auto
 }
 

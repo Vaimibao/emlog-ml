@@ -1,10 +1,9 @@
 <?php
+
 /**
  * Page Bottom Information
  */
-if (!defined('EMLOG_ROOT')) {
-    exit('error!');
-}
+defined('EMLOG_ROOT') || exit('access denied!');
 ?>
 <footer class="blog-footer">
     <div class="container footinfo">
@@ -17,7 +16,6 @@ if (!defined('EMLOG_ROOT')) {
         <?php doAction('index_footer') ?>
     </div>
 </footer>
-<script src="<?= TEMPLATE_URL ?>js/common_tpl.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
-<script src="<?= TEMPLATE_URL ?>js/zoom.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
 </body>
+
 </html>

@@ -3,7 +3,7 @@
  * author's articles
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 class Author_Controller {
@@ -29,7 +29,7 @@ class Author_Controller {
         //page meta
         $site_title = $author_name . ' - ' . $site_title;
 
-/*vot*/        $sqlSegment = "AND author=$author ORDER BY date DESC";
+        $sqlSegment = "and author=$author order by date desc";
         $sta_cache = $CACHE->readCache('sta');
         $lognum = $sta_cache[$author]['lognum'];
 

@@ -1,33 +1,46 @@
 <?php
+
 /**
  * store model
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Store_Model {
+class Store_Model
+{
 
-    public function getTemplates($tag, $keyword, $page, $author_id, $sid) {
+    public function getApps($tag, $keyword, $page, $author_id, $sid)
+    {
+        return $this->reqEmStore('all', $tag, $keyword, $page, $author_id, $sid);
+    }
+
+    public function getTemplates($tag, $keyword, $page, $author_id, $sid)
+    {
         return $this->reqEmStore('tpl', $tag, $keyword, $page, $author_id, $sid);
     }
 
-    public function getPlugins($tag, $keyword, $page, $author_id, $sid) {
+    public function getPlugins($tag, $keyword, $page, $author_id, $sid)
+    {
         return $this->reqEmStore('plu', $tag, $keyword, $page, $author_id, $sid);
     }
 
-    public function getMyAddon() {
+    public function getMyAddon()
+    {
         return $this->reqEmStore('mine');
     }
 
-    public function getSvipAddon() {
+    public function getSvipAddon()
+    {
         return $this->reqEmStore('svip');
     }
 
-    public function getTopAddon() {
+    public function getTopAddon()
+    {
         return $this->reqEmStore('top');
     }
 
-    public function reqEmStore($type, $tag = '', $keyword = '', $page = 1, $author_id = 0, $sid = 0) {
+    public function reqEmStore($type, $tag = '', $keyword = '', $page = 1, $author_id = 0, $sid = 0)
+    {
         $emcurl = new EmCurl();
 
         $post_data = [
@@ -41,7 +54,7 @@ class Store_Model {
             'sid'       => $sid
         ];
         $emcurl->setPost($post_data);
-        $emcurl->request('https://emlog.in/store/pro');
+        $emcurl->request('https://store.emlog.net/store/pro');
 
         $retStatus = $emcurl->getHttpStatus();
         if ($retStatus !== MSGCODE_SUCCESS) {
@@ -61,6 +74,11 @@ class Store_Model {
 
         $data = [];
         switch ($type) {
+            case 'all':
+                $data['apps'] = isset($ret['data']['apps']) ? $ret['data']['apps'] : [];
+                $data['count'] = isset($ret['data']['count']) ? $ret['data']['count'] : 0;
+                $data['page_count'] = isset($ret['data']['page_count']) ? $ret['data']['page_count'] : 0;
+                break;
             case 'tpl':
                 $data['templates'] = isset($ret['data']['templates']) ? $ret['data']['templates'] : [];
                 $data['count'] = isset($ret['data']['count']) ? $ret['data']['count'] : 0;
@@ -79,5 +97,4 @@ class Store_Model {
         }
         return $data;
     }
-
 }

@@ -1,28 +1,36 @@
 <?php
+
 /**
  * commment model
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Comment_Model {
+class Comment_Model
+{
 
     private $db;
+    private $table;
+    private $table_blog;
 
-    function __construct() {
+    function __construct()
+    {
         $this->db = Database::getInstance();
+        $this->table = DB_PREFIX . 'comment';
+        $this->table_blog = DB_PREFIX . 'blog';
     }
 
     /**
      * get comment list
      */
-    function getComments($blogId = null, $hide = null, $page = null) {
+    function getComments($blogId = null, $hide = null, $page = null)
+    {
         $andQuery = '1=1';
         $andQuery .= $blogId ? " and a.gid=$blogId" : '';
         $andQuery .= $hide ? " and a.hide='$hide'" : '';
         $condition = '';
 
-/*vot*/        $sql = "SELECT * FROM " . DB_PREFIX . "comment AS a WHERE $andQuery ORDER BY a.top ASC, a.date ASC $condition";
+        $sql = "SELECT * FROM $this->table as a where $andQuery ORDER BY a.top ASC, a.date ASC $condition";
 
         $ret = $this->db->query($sql);
         $comments = [];
@@ -70,26 +78,70 @@ class Comment_Model {
         return $comments;
     }
 
+    function getCommentListForApi($blogId = null, $hide = null)
+    {
+        $andQuery = '1=1';
+        $andQuery .= $blogId ? " and a.gid=$blogId" : '';
+        $andQuery .= $hide ? " and a.hide='$hide'" : '';
+        $condition = '';
+
+        $sql = "SELECT * FROM $this->table as a where $andQuery ORDER BY a.top ASC, a.date ASC $condition";
+
+        $ret = $this->db->query($sql);
+        $comments = [];
+        while ($row = $this->db->fetch_array($ret)) {
+            $comments[$row['cid']] = [
+                'cid' => (int)$row['cid'],
+                'gid' => (int)$row['gid'],
+                'pid' => (int)$row['pid'],
+                'uid' => (int)$row['uid'],
+                'top' => $row['top'],
+                'like_count' => (int)$row['like_count'],
+                'poster' => htmlspecialchars($row['poster']),
+                'avatar' => $this->getAvatar($row['uid'], $row['mail'], $row['avatar']),
+                'url' => htmlspecialchars($row['url']),
+                'content' => htmlClean($row['comment']),
+                'date' => smartDate($row['date']),
+            ];
+        }
+        foreach ($comments as $cid => $comment) {
+            $pid = $comment['pid'];
+            if ($pid != 0 && isset($comments[$pid])) {
+                $comments[$pid]['children'][] = &$comments[$cid];
+            }
+        }
+
+        $commentList = [];
+        foreach ($comments as $comment) {
+            if ($comment['pid'] == 0) {
+                $commentList[] = $comment;
+            }
+        }
+
+        return $commentList;
+    }
+
     /**
      * get comment list for admin
      */
-    function getCommentsForAdmin($blogId = null, $hide = null, $page = null) {
+    function getCommentsForAdmin($blogId = null, $uid = null, $hide = null, $page = null, $per_page_num = 20)
+    {
         $orderBy = $blogId ? "ORDER BY a.top DESC, a.date DESC" : 'ORDER BY a.date DESC';
         $andQuery = '1=1';
-/*vot*/        $andQuery .= $blogId ? " AND a.gid=$blogId" : '';
-/*vot*/        $andQuery .= $hide ? " AND a.hide='$hide'" : '';
+        $andQuery .= $blogId ? " and a.gid=$blogId" : '';
+        $andQuery .= $uid ? " and a.uid=$uid" : '';
+        $andQuery .= $hide ? " and a.hide='$hide'" : '';
         $condition = '';
         if ($page) {
-            $perpage_num = Option::get('admin_perpage_num');
             if ($page > PHP_INT_MAX) {
                 $page = PHP_INT_MAX;
             }
-            $startId = ($page - 1) * $perpage_num;
-            $condition = "LIMIT $startId, " . $perpage_num;
+            $startId = ($page - 1) * $per_page_num;
+            $condition = "LIMIT $startId, " . $per_page_num;
         }
 
-/*vot*/        $andQuery .= !User::haveEditPermission() ? ' AND b.author=' . UID : '';
-/*vot*/        $sql = "SELECT *,a.hide,a.date,a.top FROM " . DB_PREFIX . "comment AS a, " . DB_PREFIX . "blog AS b WHERE $andQuery AND a.gid=b.gid $orderBy $condition";
+        $andQuery .= !User::haveEditPermission() ? ' and b.author=' . UID : '';
+        $sql = "SELECT *,a.hide,a.date,a.top FROM $this->table as a, $this->table_blog as b where $andQuery and a.gid=b.gid $orderBy $condition";
 
         $ret = $this->db->query($sql);
         $comments = [];
@@ -99,7 +151,6 @@ class Comment_Model {
             $row['url'] = htmlspecialchars($row['url']);
             $row['comment'] = htmlClean($row['comment']);
             $row['date'] = smartDate($row['date']);
-            $row['top'] = $row['top'];
             $row['os'] = get_os($row['agent']);
             $row['browse'] = get_browse($row['agent']);
             $row['children'] = [];
@@ -109,8 +160,9 @@ class Comment_Model {
         return $comments;
     }
 
-    function getOneComment($commentId, $nl2br = false) {
-/*vot*/        $sql = "SELECT * FROM " . DB_PREFIX . "comment WHERE cid=$commentId";
+    function getOneComment($commentId, $nl2br = false)
+    {
+        $sql = "select * from $this->table where cid=$commentId";
         $res = $this->db->query($sql);
         if ($this->db->affected_rows() < 1) {
             return false;
@@ -122,107 +174,121 @@ class Comment_Model {
         return $comment;
     }
 
-    function getCommentNum($blogId = null, $hide = null) {
+    function getCommentNum($blogId = null, $uid = null, $hide = null)
+    {
         $andQuery = '1=1';
-/*vot*/        $andQuery .= $blogId ? " AND a.gid=$blogId" : '';
-/*vot*/        $andQuery .= $hide ? " AND a.hide='$hide'" : '';
+        $andQuery .= $blogId ? " and a.gid=$blogId" : '';
+        $andQuery .= $uid ? " and a.uid=$uid" : '';
+        $andQuery .= $hide ? " and a.hide='$hide'" : '';
         if (User::haveEditPermission()) {
-/*vot*/            $sql = "SELECT count(*) FROM " . DB_PREFIX . "comment AS a WHERE $andQuery";
+            $sql = "SELECT count(*) FROM $this->table as a where $andQuery";
         } else {
-/*vot*/            $sql = "SELECT count(*) FROM " . DB_PREFIX . "comment AS a, " . DB_PREFIX . "blog AS b WHERE $andQuery AND a.gid=b.gid AND b.author=" . UID;
+            $sql = "SELECT count(*) FROM $this->table as a, $this->table_blog as b where $andQuery and a.gid=b.gid and b.author=" . UID;
         }
         $res = $this->db->once_fetch_array($sql);
         return $res['count(*)'];
     }
 
-    function delComment($commentId) {
+    function delComment($commentId)
+    {
         $this->isYoursComment($commentId);
-        $row = $this->db->once_fetch_array("SELECT gid FROM " . DB_PREFIX . "comment WHERE cid=$commentId");
+        $row = $this->db->once_fetch_array("SELECT gid FROM $this->table WHERE cid=$commentId");
         $blogId = (int)$row['gid'];
         $commentIds = array($commentId);
 
-        $query = $this->db->query("SELECT cid,pid FROM " . DB_PREFIX . "comment WHERE gid=$blogId AND cid>$commentId ");
+        $query = $this->db->query("SELECT cid,pid FROM $this->table WHERE gid=$blogId AND cid>$commentId ");
         while ($row = $this->db->fetch_array($query)) {
             if (in_array($row['pid'], $commentIds)) {
                 $commentIds[] = $row['cid'];
             }
         }
         $commentIds = implode(',', $commentIds);
-        $this->db->query("DELETE FROM " . DB_PREFIX . "comment WHERE cid IN ($commentIds)");
+        $this->db->query("DELETE FROM $this->table WHERE cid IN ($commentIds)");
         $this->updateCommentNum($blogId);
     }
 
-    function delCommentByIp($ip) {
+    function delCommentByIp($ip)
+    {
         $blogids = [];
-        $sql = "SELECT DISTINCT gid FROM " . DB_PREFIX . "comment WHERE ip='$ip'";
+        $sql = "SELECT DISTINCT gid FROM $this->table WHERE ip='$ip'";
         $query = $this->db->query($sql);
         while ($row = $this->db->fetch_array($query)) {
             $blogids[] = $row['gid'];
         }
-        $this->db->query("DELETE FROM " . DB_PREFIX . "comment WHERE ip='$ip'");
+        $this->db->query("DELETE FROM $this->table WHERE ip='$ip'");
         $this->updateCommentNum($blogids);
     }
 
-    function hideComment($commentId) {
+    function hideComment($commentId)
+    {
         $this->isYoursComment($commentId);
-        $row = $this->db->once_fetch_array("SELECT gid FROM " . DB_PREFIX . "comment WHERE cid=$commentId");
+        $row = $this->db->once_fetch_array("SELECT gid FROM $this->table WHERE cid=$commentId");
         $blogId = (int)$row['gid'];
         $commentIds = array($commentId);
         /* Get sub-comment ID */
-        $query = $this->db->query("SELECT cid,pid FROM " . DB_PREFIX . "comment WHERE gid=$blogId AND cid>$commentId ");
+        $query = $this->db->query("SELECT cid,pid FROM $this->table WHERE gid=$blogId AND cid>$commentId ");
         while ($row = $this->db->fetch_array($query)) {
             if (in_array($row['pid'], $commentIds)) {
                 $commentIds[] = $row['cid'];
             }
         }
         $commentIds = implode(',', $commentIds);
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET hide='y' WHERE cid IN ($commentIds)");
+        $this->db->query("UPDATE $this->table SET hide='y' WHERE cid IN ($commentIds)");
         $this->updateCommentNum($blogId);
     }
 
-    function showComment($commentId) {
+    function showComment($commentId)
+    {
         $this->isYoursComment($commentId);
-        $row = $this->db->once_fetch_array("SELECT gid,pid FROM " . DB_PREFIX . "comment WHERE cid=$commentId");
+        $row = $this->db->once_fetch_array("SELECT gid,pid FROM $this->table WHERE cid=$commentId");
         $blogId = (int)$row['gid'];
         $commentIds = array($commentId);
 
         while ($row['pid'] != 0) {
             $commentId = (int)$row['pid'];
             $commentIds[] = $commentId;
-            $row = $this->db->once_fetch_array("SELECT pid FROM " . DB_PREFIX . "comment WHERE cid=$commentId");
+            $row = $this->db->once_fetch_array("SELECT pid FROM $this->table WHERE cid=$commentId");
         }
         $commentIds = implode(',', $commentIds);
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET hide='n' WHERE cid IN ($commentIds)");
+        $this->db->query("UPDATE $this->table SET hide='n' WHERE cid IN ($commentIds)");
         $this->updateCommentNum($blogId);
     }
 
-    function topComment($commentId, $top = 'y') {
+    function topComment($commentId, $top = 'y')
+    {
         $this->isYoursComment($commentId);
         $commentIds = array($commentId);
         $commentIds = implode(',', $commentIds);
-        $this->db->query("UPDATE " . DB_PREFIX . "comment SET top='$top' WHERE cid IN ($commentIds)");
+        $this->db->query("UPDATE $this->table SET top='$top' WHERE cid IN ($commentIds)");
     }
 
-    function replyComment($blogId, $pid, $content, $hide) {
+    function likeComment($commentId)
+    {
+        $this->db->query("UPDATE $this->table SET like_count = like_count + 1 WHERE cid = $commentId");
+    }
+
+    function replyComment($blogId, $pid, $content, $hide)
+    {
         $User_Model = new User_Model();
         $user_info = $User_Model->getOneUser(UID);
-        if (!empty($user_info)) {
-            $name = addslashes($user_info['name_orig']);
-            $mail = addslashes($user_info['email']);
-            $url = addslashes(BLOG_URL);
-            $ipaddr = getIp();
-            $utctimestamp = time();
-            if ($pid != 0) {
-                $comment = $this->getOneComment($pid);
-                $content = '@' . addslashes($comment['poster']) . ': ' . $content;
-            }
-            $this->db->query("INSERT INTO " . DB_PREFIX . "comment (date,poster,gid,comment,mail,url,hide,ip,pid)
-                    VALUES ('$utctimestamp','$name','$blogId','$content','$mail','$url','$hide','$ipaddr','$pid')");
-            $this->updateCommentNum($blogId);
+
+        if (empty($user_info) || !$blogId) {
+            return false;
         }
+
+        $name = addslashes($user_info['name_orig']);
+
+        $uid = UID;
+        $ipaddr = getIp();
+        $timestamp = time();
+        $useragent = addslashes(getUA());
+        $this->db->query("INSERT INTO $this->table (date,poster,uid,gid,comment,mail,url,hide,ip,agent,pid)
+                    VALUES ('$timestamp','$name',$uid,$blogId,'$content','','','$hide','$ipaddr','$useragent',$pid)");
+        $this->updateCommentNum($blogId);
     }
 
-    function batchComment($action, $comments) {
+    function batchComment($action, $comments)
+    {
         switch ($action) {
             case 'delcom':
                 foreach ($comments as $val) {
@@ -252,40 +318,42 @@ class Comment_Model {
         }
     }
 
-    function updateCommentNum($blogId) {
+    function updateCommentNum($blogId)
+    {
         if (is_array($blogId)) {
             foreach ($blogId as $val) {
                 $this->updateCommentNum($val);
             }
         } else {
-            $sql = "SELECT count(*) FROM " . DB_PREFIX . "comment WHERE gid=$blogId AND hide='n'";
+            $sql = "SELECT count(*) FROM $this->table WHERE gid=$blogId AND hide='n'";
             $res = $this->db->once_fetch_array($sql);
             $comNum = $res['count(*)'];
-            $this->db->query("UPDATE " . DB_PREFIX . "blog SET comnum=$comNum WHERE gid=$blogId");
+            $this->db->query("UPDATE $this->table_blog SET comnum=$comNum WHERE gid=$blogId");
             return $comNum;
         }
     }
 
-    function addComment($uid, $name, $content, $mail, $url, $blogId, $pid) {
+    function addComment($uid, $name, $content, $mail, $url, $avatar, $blogId, $pid)
+    {
         $ipaddr = getIp();
         $timestamp = time();
-        $useragent = addslashes($_SERVER['HTTP_USER_AGENT']);
+        $useragent = addslashes(getUA());
 
         if ($pid > 0) {
             $comment = $this->getOneComment($pid);
-            $content = '@' . addslashes($comment['poster']) . ': ' . $content;
+            $content = '@' . addslashes($comment['poster']) . '：' . $content;
         }
 
         $hide = Option::get('ischkcomment') == 'y' && !User::haveEditPermission() ? 'y' : 'n';
 
-        $sql = 'INSERT INTO ' . DB_PREFIX . "comment (uid,date,poster,gid,comment,mail,url,hide,ip,agent,pid)
-                VALUES ($uid,'$timestamp','$name','$blogId','$content','$mail','$url','$hide','$ipaddr','$useragent','$pid')";
+        $sql = "INSERT INTO $this->table (uid,date,poster,gid,comment,mail,url,avatar,hide,ip,agent,pid)
+                VALUES ($uid,'$timestamp','$name','$blogId','$content','$mail','$url','$avatar','$hide','$ipaddr','$useragent','$pid')";
         $this->db->query($sql);
         $cid = $this->db->insert_id();
         $CACHE = Cache::getInstance();
 
         if ($hide === 'n') {
-            $this->db->query('UPDATE ' . DB_PREFIX . "blog SET comnum = comnum + 1 WHERE gid='$blogId'");
+            $this->db->query("UPDATE $this->table_blog SET comnum = comnum + 1 WHERE gid='$blogId'");
             $CACHE->updateCache(array('sta', 'comment'));
             doAction('comment_saved', $cid);
             return ['cid' => $cid, 'hide' => 'n'];
@@ -295,50 +363,67 @@ class Comment_Model {
         return ['cid' => $cid, 'hide' => 'y'];
     }
 
-    function isCommentExist($blogId, $name, $content) {
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "comment WHERE gid=$blogId AND poster='$name' AND comment='$content'");
+    function isCommentExist($blogId, $name, $content)
+    {
+        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table WHERE gid=$blogId AND poster='$name' AND comment='$content'");
         return $data['total'] > 0;
     }
 
-    function isYoursComment($cid) {
-        if (User::haveEditPermission() || User::isVistor()) {
+    function isYoursComment($cid)
+    {
+        if (User::haveEditPermission() || User::isVisitor()) {
             return true;
         }
-/*vot*/        $query = $this->db->query("SELECT a.cid FROM " . DB_PREFIX . "comment AS a," . DB_PREFIX . "blog AS b WHERE a.cid=$cid AND a.gid=b.gid AND b.author=" . UID);
+        $query = $this->db->query("SELECT a.cid FROM $this->table as a,$this->table_blog as b WHERE a.cid=$cid and a.gid=b.gid AND b.author=" . UID);
         $result = $this->db->num_rows($query);
         if ($result <= 0) {
             emMsg(lang('no_permission'), './');
         }
     }
 
-    function isLogCanComment($blogId) {
-        if ($blogId <= 0 || Option::get('iscomment') == 'n') {
-            return false;
-        }
-        $query = $this->db->query("SELECT allow_remark FROM " . DB_PREFIX . "blog WHERE gid=$blogId");
-        $show_remark = $this->db->fetch_array($query);
-        if ($show_remark['allow_remark'] == 'n' || $show_remark === false) {
-            return false;
-        }
-
-        return true;
-    }
-
-    function isCommentTooFast() {
+    function isCommentTooFast()
+    {
         $ipaddr = getIp();
         $utctimestamp = time() - Option::get('comment_interval');
 
-/*vot*/        $sql = 'SELECT count(*) AS num FROM ' . DB_PREFIX . "comment WHERE date > $utctimestamp AND ip='$ipaddr'";
+        $sql = "select count(*) as num from $this->table where date > $utctimestamp AND ip='$ipaddr'";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
 
         return (int)$row['num'] > 0;
     }
 
-    function setCommentCookie($name, $mail, $url) {
+    function hasCommented($blogId, $uid)
+    {
+        $ipaddr = getIp();
+
+        $sql = "SELECT COUNT(*) as num FROM $this->table WHERE gid = $blogId AND (uid = $uid OR ip = '$ipaddr')";
+        $res = $this->db->query($sql);
+        $row = $this->db->fetch_array($res);
+
+        return (int)$row['num'] > 0;
+    }
+
+    function setCommentCookie($name, $mail, $url)
+    {
         $cookietime = time() + 31536000;
         setcookie('commentposter', $name, $cookietime);
         setcookie('postermail', $mail, $cookietime);
         setcookie('posterurl', $url, $cookietime);
+    }
+
+    function getAvatar($uid, $mail, $avatar = '')
+    {
+        if ($avatar) {
+            return $avatar;
+        }
+        if ($uid) {
+            $userModel = new User_Model();
+            $user = $userModel->getOneUser($uid);
+            $avatar = getFileUrl($user['photo']);
+        } elseif ($mail) {
+            $avatar = getGravatar($mail);
+        }
+        return $avatar ?: BLOG_URL . "admin/views/images/avatar.svg";
     }
 }

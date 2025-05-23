@@ -1,20 +1,28 @@
 <?php
+
 /**
  * notes model
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Twitter_Model {
+class Twitter_Model
+{
 
     private $db;
+    private $parsedown;
+    private $table;
 
-    function __construct() {
+    function __construct()
+    {
         $this->db = Database::getInstance();
+        $this->parsedown = new Parsedown();
+        $this->table = DB_PREFIX . 'twitter';
     }
 
-    function addTwitter($tData) {
+    function addTwitter($tData)
+    {
         $kItem = [];
         $dItem = [];
         foreach ($tData as $key => $data) {
@@ -23,47 +31,62 @@ class Twitter_Model {
         }
         $field = implode(',', $kItem);
         $values = "'" . implode("','", $dItem) . "'";
-        $this->db->query("INSERT INTO " . DB_PREFIX . "twitter ($field) VALUES ($values)");
+        $this->db->query("INSERT INTO $this->table ($field) VALUES ($values)");
         return $this->db->insert_id();
     }
 
-    function update($data, $id) {
+    function update($data, $id)
+    {
         $Item = [];
         foreach ($data as $key => $value) {
             $Item[] = "$key='$value'";
         }
         $upStr = implode(',', $Item);
-        $this->db->query("update " . DB_PREFIX . "twitter set $upStr where id=$id");
+        $this->db->query("update $this->table set $upStr where id=$id");
     }
 
-    function getCount($uid = UID) {
-/*vot*/        $author = $uid ? 'AND author=' . $uid : '';
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "twitter WHERE 1=1 $author");
+    function getCount($uid = UID)
+    {
+        $author = $uid ? 'and author=' . $uid : '';
+        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table WHERE 1=1 $author");
         return $data['total'];
     }
 
-    function getTwitters($uid, $page = 1, $perpage_num = 20) {
+    /**
+     * Get Twitter
+     * @param int $uid User ID
+     * @param int $page Page
+     * @param int $perpage_num Quantity per page
+     * @param bool $private Whether to return private Twitter
+     * @return array
+     */
+    function getTwitters($uid, $page = 1, $perpage_num = 20, $private = false)
+    {
         $start_limit = !empty($page) ? ($page - 1) * $perpage_num : 0;
-/*vot*/        $author = $uid ? 'AND author=' . $uid : '';
-        $limit = "LIMIT $start_limit, " . $perpage_num;
-        $sql = "SELECT * FROM " . DB_PREFIX . "twitter WHERE 1=1 $author ORDER BY id DESC $limit";
+        $author = $uid ? 'and author=' . $uid : '';
+        $privateCondition = $private ? '' : 'AND private="n"';
+        $limit = "LIMIT $start_limit, $perpage_num";
+        $sql = "SELECT * FROM $this->table WHERE 1=1 $author $privateCondition ORDER BY id DESC $limit";
         $res = $this->db->query($sql);
         $tws = [];
         while ($row = $this->db->fetch_array($res)) {
-            $row['t'] = $row['content'];
+            $row['t'] = $this->parsedown->text($row['content']);
+            $row['t_raw'] = $row['content'];
+            $row['t_img'] = getFirstImage($row['content']);
             $row['date'] = smartDate($row['date']);
             $tws[] = $row;
         }
         return $tws;
     }
 
-    function delTwitter($tid) {
+    function delTwitter($tid)
+    {
         $author = User::haveEditPermission() ? '' : 'and author=' . UID;
-/*vot*/        $query = $this->db->query("SELECT img FROM " . DB_PREFIX . "twitter WHERE id=$tid $author");
+        $query = $this->db->query("select img from $this->table where id=$tid $author");
         $row = $this->db->fetch_array($query);
 
         // del tw
-/*vot*/        $this->db->query("DELETE FROM " . DB_PREFIX . "twitter WHERE id=$tid $author");
+        $this->db->query("DELETE FROM $this->table where id=$tid $author");
         if ($this->db->affected_rows() < 1) {
             emMsg(lang('no_permission'), './');
         }

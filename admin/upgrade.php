@@ -1,8 +1,9 @@
 <?php
+
 /**
  * upgrade
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -20,23 +21,60 @@ if ($action === 'check_update') {
         'timestamp' => Option::EMLOG_VERSION_TIMESTAMP,
     ]);
 
-    $emcurl->request('https://emlog.in/service/upgrade');
+    $emcurl->request('https://store.emlog.net/service/upgrade');
     $retStatus = $emcurl->getHttpStatus();
     $response = $emcurl->getRespone();
     header('Content-Type: application/json; charset=UTF-8');
     if ($retStatus !== 200) {
         exit('{"result":"fail"}');
     }
-    exit($response);
+    $r = json_decode($response);
+    if ($r->code === 1001) {
+        Register::clean();
+    }
+    exit('{"result":"fail"}'); // The emlog official website does not support online updates, so it is temporarily disabled
+    // exit($response);
 }
 
 if ($action === 'update' && User::isAdmin()) {
-    $source = isset($_GET['source']) ? trim($_GET['source']) : '';
-    $upsql = isset($_GET['upsql']) ? trim($_GET['upsql']) : '';
+    $source = Input::getStrVar('source', '');
+    $upsql = Input::getStrVar('upsql', '');
 
-    if (empty($source)) {
+    if (empty($source) || empty($upsql)) {
         exit('error');
     }
+
+    // update database
+    $temp_sql_file = emFetchFile($upsql);
+    if (!$temp_sql_file) {
+        exit('error_down');
+    }
+    $DB = Database::getInstance();
+    $setchar = "ALTER DATABASE `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
+    $sql = file($temp_sql_file);
+    array_unshift($sql, $setchar);
+    $query = '';
+    foreach ($sql as $value) {
+        // Only perform updates required for the current version
+        if (!empty($value) && $value[0] == '#') {
+            preg_match("/#\s(pro\s[\.\d]+)/i", $value, $v);
+            $ver = isset($v[1]) ? trim($v[1]) : '';
+            if (version_compare(Option::EMLOG_VERSION, $ver) > 0) {
+                break;
+            }
+        }
+        if (!$value || $value[0] == '#') {
+            continue;
+        }
+        $value = str_replace("{db_prefix}", DB_PREFIX, trim($value));
+        $query .= $value;
+        if (preg_match("/\;$/i", $value)) {
+            $DB->query($query, 1);
+            $query = '';
+        }
+    }
+    $CACHE->updateCache();
+    @unlink($temp_sql_file);
 
     // update files
     $temp_zip_file = emFetchFile($source);
@@ -46,45 +84,13 @@ if ($action === 'update' && User::isAdmin()) {
     $ret = emUnZip($temp_zip_file, '../', 'update');
     switch ($ret) {
         case 1:
-        case 2:
             exit('error_dir');
+        case 2:
+            exit('error_down');
         case 3:
             exit('error_zip');
     }
     @unlink($temp_zip_file);
 
-    // update database
-    if ($upsql) {
-        $temp_sql_file = emFetchFile($upsql);
-        if (!$temp_sql_file) {
-            exit('error_down');
-        }
-        $DB = Database::getInstance();
-        $setchar = "ALTER DATABASE `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
-        $sql = file($temp_sql_file);
-        array_unshift($sql, $setchar);
-        $query = '';
-        foreach ($sql as $value) {
-            // Only perform updates required for the current version
-            if (!empty($value) && $value[0] == '#') {
-                preg_match("/#\s(pro\s[\.\d]+)/i", $value, $v);
-                $ver = isset($v[1]) ? trim($v[1]) : '';
-                if (Option::EMLOG_VERSION > $ver) {
-                    break;
-                }
-            }
-            if (!$value || $value[0] == '#') {
-                continue;
-            }
-            $value = str_replace("{db_prefix}", DB_PREFIX, trim($value));
-            $query .= $value;
-            if (preg_match("/\;$/i", $value)) {
-                $DB->query($query, 1);
-                $query = '';
-            }
-        }
-        $CACHE->updateCache();
-        @unlink($temp_sql_file);
-    }
     exit('succ');
 }

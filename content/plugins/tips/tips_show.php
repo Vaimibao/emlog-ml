@@ -1,9 +1,9 @@
 <?php
-!defined('EMLOG_ROOT') && exit('access deined!');
+defined('EMLOG_ROOT') || exit('access denied!');
 
 /*
- * Display plug-in front page
- * Front page URL: https://yourdomain/?plugin=tips
+ * 插件前台展示页面
+ * 前台显示地址为：https://yourdomain/?plugin=tips
  */
 
 ?>

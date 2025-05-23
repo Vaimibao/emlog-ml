@@ -1,43 +1,52 @@
 <?php
+
 /**
  * Configuration item
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Option {
-
-    const EMLOG_VERSION = 'pro 2.1.9';
-    const EMLOG_VERSION_TIMESTAMP = 1701315414;
+class Option
+{
+    const EMLOG_VERSION = 'pro 2.5.14';
+    const EMLOG_VERSION_TIMESTAMP = 1747056571;
     const UPLOADFILE_PATH = '../content/uploadfile/';
+    const UPLOADFILE_FULL_PATH = EMLOG_ROOT . '/content/uploadfile/';
 
-    static function get($option) {
+    static function get($option)
+    {
         $CACHE = Cache::getInstance();
         $options_cache = $CACHE->readCache('options');
-        if (isset($options_cache[$option])) {
-            switch ($option) {
-                case 'active_plugins':
-                case 'navibar':
-                case 'widget_title':
-                case 'custom_widget':
-                case 'widgets1':
-                case 'custom_topimgs':
-                    if (!empty($options_cache[$option])) {
-                        return @unserialize($options_cache[$option]);
-                    }
-                    return [];
-                case 'blogurl':
-                    if ($options_cache['detect_url'] == 'y') {
-                        return realUrl();
-                    }
-                    return $options_cache['blogurl'];
-                default:
-                    return $options_cache[$option];
-            }
+
+        switch ($option) {
+            case 'active_plugins':
+            case 'widget_title':
+            case 'custom_widget':
+            case 'widgets1':
+                if (!empty($options_cache[$option])) {
+                    return @unserialize($options_cache[$option]);
+                }
+                return [];
+            case 'blogurl':
+                if ($options_cache['detect_url'] == 'y') {
+                    return realUrl();
+                }
+                return $options_cache['blogurl'];
+            case 'posts_name':
+                if (empty($options_cache['posts_name'])) {
+                    return lang('article');
+                }
+            default:
+                return isset($options_cache[$option]) ? $options_cache[$option] : '';
         }
     }
 
-    static function getRoutingTable() {
+    /** 
+     * Get route table
+     * reg_0、reg_1、reg_2、reg_3 Respectively correspond to the four article link modes in SEO settings
+     */
+    static function getRoutingTable()
+    {
         return [
             [
                 'model'  => 'calendar',
@@ -50,7 +59,7 @@ class Option {
                 'reg_0'  => '|^.*/\?(post)=(\d+)(&(comment-page)=(\d+))?([\?&].*)?$|',
                 'reg_1'  => '|^.*/(post)-(\d+)\.html(/(comment-page)-(\d+))?/?([\?&].*)?$|',
                 'reg_2'  => '|^.*/(post)/(\d+)(/(comment-page)-(\d+))?/?$|',
-                'reg_3'  => '|^/([^\./\?=]+)(\.html)?(/(comment-page)-(\d+))?/?([\?&].*)?$|',
+                'reg_3'  => '|^/?!/posts([^\./\?=]+)(\.html)?(/(comment-page)-(\d+))?/?([\?&].*)?$|',
             ],
             [
                 'model'  => 'Record_Controller',
@@ -88,14 +97,34 @@ class Option {
                 'reg_0'  => '|^.*/\?(keyword)=([^/&]+)(&(page)=(\d+))?([\?&].*)?$|',
             ],
             [
-                'model'  => 'Comment_Controller',
-                'method' => 'addComment',
-                'reg_0'  => '|^.*/\?(action)=(addcom)([\?&].*)?$|',
+                'model'  => 'Log_Controller',
+                'method' => 'index',
+                'reg_0'  => '|^.*/\?(action)=([a-z]+)([\?&].*)?$|',
             ],
             [
                 'model'  => 'Plugin_Controller',
                 'method' => 'loadPluginShow',
                 'reg_0'  => '|^.*/\?(plugin)=([\w\-]+).*([\?&].*)?$|',
+            ],
+            [
+                'model'  => 'User_Controller',
+                'method' => 'index',
+                'reg_0'  => '|\/(user)(?:\/([\w\-]+))?|',
+            ],
+            [
+                'model'  => 'User_Controller',
+                'method' => 'index',
+                'reg_0'  => '|^.*/\?(uc)=(\w+)([\?&].*)?$|',
+            ],
+            [
+                'model'  => 'Plugin_Controller',
+                'method' => 'loadPluginShow',
+                'reg_0'  => '|\/(plugin)/([\w\-]+)|',
+            ],
+            [
+                'model'  => 'Log_Controller',
+                'method' => 'display',
+                'reg_0'  => '|\/posts(\?.*)?|',
             ],
             [
                 'model'  => 'Log_Controller',
@@ -108,6 +137,11 @@ class Option {
                 'reg_0'  => '|^.*/\?(rest-api)=(\w+)([\?&].*)?$|',
             ],
             [
+                'model'  => 'Download_Controller',
+                'method' => 'index',
+                'reg_0'  => '|^.*/\?(resource_alias)=(\w+)$|',
+            ],
+            [
                 'model'  => 'Log_Controller',
                 'method' => 'display',
                 'reg_0'  => '|^/?([\?&].*)?$|',
@@ -115,7 +149,8 @@ class Option {
         ];
     }
 
-    static function getAll() {
+    static function getAll()
+    {
         $CACHE = Cache::getInstance();
         $options_cache = $CACHE->readCache('options');
         $options_cache['site_title'] = $options_cache['site_title'] ?: $options_cache['blogname'];
@@ -126,19 +161,65 @@ class Option {
         return $options_cache;
     }
 
-    static function getAttType() {
+    static function getAttType()
+    {
         return explode(',', self::get('att_type'));
     }
 
-    static function getAttMaxSize() {
+    static function getAttMaxSize()
+    {
         return self::get('att_maxsize') * 1024;
     }
 
-    static function getWidgetTitle() {
+    static function getAdminAttType()
+    {
+        if (defined('UPLOAD_ATT_TYPE')) {
+            return explode(',', UPLOAD_ATT_TYPE);
+        } else {
+            return [
+                'rar',
+                'zip',
+                '7z',
+                'gz',
+                'gif',
+                'jpg',
+                'jpeg',
+                'png',
+                'webp',
+                'avif',
+                'svg',
+                'txt',
+                'pdf',
+                'docx',
+                'doc',
+                'xls',
+                'xlsx',
+                'key',
+                'ppt',
+                'pptx',
+                'mp3',
+                'mp4',
+                'mkv',
+                'mov',
+                'webm',
+                'avi',
+                'exe',
+            ];
+        }
+    }
+
+    static function getAdminAttMaxSize()
+    {
+        return (defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 2097152) * 1024;
+    }
+
+    static function getWidgetTitle()
+    {
         return [
             'blogger'     => lang('blogger'),
             'calendar'    => lang('calendar'),
             'tag'         => lang('tags'),
+            'twitter'     => lang('twitter'),
             'sort'        => lang('categories'),
             'archive'     => lang('archive'),
             'newcomm'     => lang('new_comments'),
@@ -150,11 +231,13 @@ class Option {
         ];
     }
 
-    static function getDefWidget() {
+    static function getDefWidget()
+    {
         return ['blogger', 'newcomm', 'link', 'search'];
     }
 
-    static function getDefPlugin() {
+    static function getDefPlugin()
+    {
         return ['tips/tips.php', 'tpl_options/tpl_options.php'];
     }
 
@@ -164,11 +247,11 @@ class Option {
      * @param $value
      * @param $isSyntax is the update value is an expression
      */
-    static function updateOption($name, $value, $isSyntax = false) {
+    static function updateOption($name, $value, $isSyntax = false)
+    {
         $DB = Database::getInstance();
         $value = $isSyntax ? $value : "'$value'";
-        /*vot*/
-        $sql = 'INSERT INTO ' . DB_PREFIX . "options (option_name, option_value) VALUES ('$name', $value) ON DUPLICATE KEY UPDATE option_value=$value, option_name='$name'";
+        $sql = 'INSERT INTO ' . DB_PREFIX . "options (option_name, option_value) values ('$name', $value) ON DUPLICATE KEY UPDATE option_value=$value, option_name='$name'";
         $DB->query($sql);
     }
 }

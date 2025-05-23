@@ -1,11 +1,13 @@
 <?php
+
 /**
  * Common function library
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-function emAutoload($class) {
+function emAutoload($class)
+{
     $class = strtolower($class);
 
     load_language($class);
@@ -24,7 +26,8 @@ function emAutoload($class) {
 /**
  * Convert HTML Code
  */
-function htmlClean($content, $nl2br = true) {
+function htmlClean($content, $nl2br = true)
+{
     $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
     if ($nl2br) {
         $content = nl2br($content);
@@ -35,23 +38,38 @@ function htmlClean($content, $nl2br = true) {
 }
 
 if (!function_exists('getIp')) {
-    function getIp() {
+    function getIp()
+    {
         $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
-        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+
+        // Check for Cloudflare
+        if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $list = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            $ip = $list[0];
+            $ip = trim($list[0]);
         }
+
         if (!ip2long($ip)) {
             $ip = '';
         }
+
         return $ip;
+    }
+}
+
+if (!function_exists('getUA')) {
+    function getUA()
+    {
+        return isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
     }
 }
 
 /**
  * Get site URL (Only for the root directory script, currently used only for home ajax request)
  */
-function getBlogUrl() {
+function getBlogUrl()
+{
     $phpself = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
     if (preg_match("/^.*\//", $phpself, $matches)) {
         return 'http://' . $_SERVER['HTTP_HOST'] . $matches[0];
@@ -63,14 +81,14 @@ function getBlogUrl() {
 /**
  * Get the currently visited base url
  */
-function realUrl() {
+function realUrl()
+{
     static $real_url = NULL;
     if ($real_url !== NULL) {
         return $real_url;
     }
 
-    /*vot*/
-    $emlog_path = EMLOG_ROOT . '/';
+    $emlog_path = EMLOG_ROOT . DIRECTORY_SEPARATOR;
     $script_path = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME);
     $script_path = str_replace('\\', '/', $script_path);
     $path_element = explode('/', $script_path);
@@ -80,8 +98,7 @@ function realUrl() {
     $current_deep = 0;
     $max_deep = count($path_element);
     while ($current_deep < $max_deep) {
-        /*vot*/
-        $this_match = $this_match . $path_element[$current_deep] . '/';
+        $this_match = $this_match . $path_element[$current_deep] . DIRECTORY_SEPARATOR;
         if (substr($emlog_path, strlen($this_match) * (-1)) === $this_match) {
             $best_match = $this_match;
         }
@@ -90,7 +107,7 @@ function realUrl() {
     $best_match = str_replace(DIRECTORY_SEPARATOR, '/', $best_match);
 
     $protocol = 'http://';
-    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') { // Compatible with nginx reverse proxy
+    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') { // 兼容nginx反向代理的情况
         $protocol = 'https://';
     } elseif (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
         $protocol = 'https://';
@@ -104,7 +121,8 @@ function realUrl() {
 /**
  * Check plugin
  */
-function checkPlugin($plugin) {
+function checkPlugin($plugin)
+{
     if (is_string($plugin) && preg_match("/^[\w\-\/]+\.php$/", $plugin) && file_exists(EMLOG_ROOT . '/content/plugins/' . $plugin)) {
         return true;
     }
@@ -115,7 +133,8 @@ function checkPlugin($plugin) {
 /**
  * Verify email address format
  */
-function checkMail($email) {
+function checkMail($email)
+{
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return true;
     }
@@ -130,15 +149,22 @@ function checkMail($email) {
  * @param int $start Start position, eg:0
  * @param int $length Length
  */
-function subString($strings, $start, $length) {
-    $sub_str = mb_substr($strings, $start, $length, 'utf8');
-    return mb_strlen($sub_str, 'utf8') < mb_strlen($strings, 'utf8') ? $sub_str . '...' : $sub_str;
+function subString($strings, $start, $length, $dot = '...')
+{
+    if (function_exists('mb_substr') && function_exists('mb_strlen')) {
+        $sub_str = mb_substr($strings, $start, $length, 'UTF-8');
+        return mb_strlen($sub_str, 'UTF-8') < mb_strlen($strings, 'UTF-8') ? $sub_str . $dot : $sub_str;
+    } else {
+        $sub_str = substr($strings, $start, $length);
+        return strlen($sub_str) < strlen($strings) ? $sub_str . $dot : $sub_str;
+    }
 }
 
 /**
  * Extract plain text from html content
  */
-function extractHtmlData($data, $len) {
+function extractHtmlData($data, $len)
+{
     $data = subString(strip_tags($data), 0, $len + 30);
     $search = array(
         "/([\r\n])[\s]+/", // Remove whitespace characters
@@ -159,11 +185,13 @@ function extractHtmlData($data, $len) {
 }
 
 /**
- * Convert file size unit
+ * Convert file size units
  *
- * @param string $fileSize //File Size kb
+ * @param int $fileSize File size in bytes
+ * @return string Formatted file size with units
  */
-function changeFileSize($fileSize) {
+function changeFileSize($fileSize)
+{
     if ($fileSize >= 1073741824) {
         $fileSize = round($fileSize / 1073741824, 2) . ' GB';
     } elseif ($fileSize >= 1048576) {
@@ -179,15 +207,17 @@ function changeFileSize($fileSize) {
 /**
  * Get the file name suffix
  */
-function getFileSuffix($fileName) {
+function getFileSuffix($fileName)
+{
     return strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 }
 
 /**
  * Convert relative path to full URL, eg: ../content/uploadfile/xxx.jpeg
  */
-function getFileUrl($filePath) {
-    if (!stristr($filePath, 'http')) {
+function getFileUrl($filePath)
+{
+    if (stripos($filePath, 'http') === false) {
         return BLOG_URL . substr($filePath, 3);
     }
     return $filePath;
@@ -196,7 +226,8 @@ function getFileUrl($filePath) {
 /**
  * Remove the url parameter
  */
-function rmUrlParams($url) {
+function rmUrlParams($url)
+{
     $urlInfo = explode("?", $url);
     if (empty($urlInfo[0])) {
         return $url;
@@ -204,26 +235,32 @@ function rmUrlParams($url) {
     return $urlInfo[0];
 }
 
-function isImage($mimetype) {
+function isImage($mimetype)
+{
     if (strpos($mimetype, "image") !== false) {
         return true;
     }
     return false;
 }
 
-function isVideo($fileName) {
-    $suffix = getFileSuffix($fileName);
-    return $suffix === 'mp4';
+function isVideo($mimetype)
+{
+    if (strpos($mimetype, "video") !== false) {
+        return true;
+    }
+    return false;
 }
 
-function isAudio($fileName) {
+function isAudio($fileName)
+{
     $suffix = getFileSuffix($fileName);
     return $suffix === 'mp3';
 }
 
-function isZip($fileName) {
+function isZip($fileName)
+{
     $suffix = getFileSuffix($fileName);
-    if (in_array($suffix, ['zip', 'rar'])) {
+    if (in_array($suffix, ['zip', 'rar', '7z', 'gz'])) {
         return true;
     }
     return false;
@@ -238,7 +275,8 @@ function isZip($fileName) {
  * @param string $url Page address
  * @return string
  */
-function pagination($count, $perlogs, $page, $url, $anchor = '') {
+function pagination($count, $perlogs, $page, $url, $anchor = '')
+{
     $pnums = @ceil($count / $perlogs);
     $re = '';
     $urlHome = preg_replace("|[\?&/][^\./\?&=]*page[=/\-]|", "", $url);
@@ -297,7 +335,8 @@ function pagination($count, $perlogs, $page, $url, $anchor = '') {
 /**
  * This function is called in the plug-in, and the plug-in function is mounted on the reserved hook
  */
-function addAction($hook, $actionFunc) {
+function addAction($hook, $actionFunc)
+{
     // Store plug-in functions mounted on the mount point through global variables
     global $emHooks;
     if (!isset($emHooks[$hook]) || !in_array($actionFunc, $emHooks[$hook])) {
@@ -310,7 +349,8 @@ function addAction($hook, $actionFunc) {
  * Mount execution mode 1 (plug-in mount): Execute the function hung on the hook, support multiple parameters eg:doAction('post_comment', $author, $email, $url, $comment);
  * eg: Insert extended content at the mount point
  */
-function doAction($hook) {
+function doAction($hook)
+{
     global $emHooks;
     $args = array_slice(func_get_args(), 1);
     if (isset($emHooks[$hook])) {
@@ -324,7 +364,8 @@ function doAction($hook) {
  * Mount execution mode 2 (single takeover mount): Execute the first function hung on the hook, execute the line only once, receive input input, and modify the incoming variable $ret
  * eg: Take over the file upload function and change the upload from local to cloud
  */
-function doOnceAction($hook, $input, &$ret) {
+function doOnceAction($hook, $input, &$ret)
+{
     global $emHooks;
     $args = [$input, &$ret];
     $func = !empty($emHooks[$hook][0]) ? $emHooks[$hook][0] : '';
@@ -337,7 +378,8 @@ function doOnceAction($hook, $input, &$ret) {
  * Mount execution mode 3 (takeover mount in turn): Execute all functions hung on the hook, the previous execution result is used as the next input, and the incoming variable $ret will be modified
  * eg: Different plug-ins make different modifications and replacements to the content of the article.
  */
-function doMultiAction($hook, $input, &$ret) {
+function doMultiAction($hook, $input, &$ret)
+{
     global $emHooks;
     $args = [$input, &$ret];
     if (isset($emHooks[$hook])) {
@@ -351,7 +393,8 @@ function doMultiAction($hook, $input, &$ret) {
 /**
  * Intercept the first len characters of the article content
  */
-function subContent($content, $len, $clean = 0) {
+function subContent($content, $len, $clean = 0)
+{
     if ($clean) {
         $content = strip_tags($content);
     }
@@ -364,7 +407,8 @@ function subContent($content, $len, $clean = 0) {
  * @param $format
  * @return false|string
  */
-function smartDate($timestamp, $format = 'Y-m-d H:i') {
+function smartDate($timestamp, $format = 'Y-m-d H:i')
+{
     $sec = time() - $timestamp;
     if ($sec < 60) {
         $op = $sec . lang('_sec_ago');
@@ -372,22 +416,49 @@ function smartDate($timestamp, $format = 'Y-m-d H:i') {
         $op = floor($sec / 60) . lang('_min_ago');
     } elseif ($sec < 3600 * 24) {
         $op = lang('about_') . floor($sec / 3600) . lang('_hour_ago');
+    } elseif ($sec < 3600 * 24 * 30) {
+        $days = floor($sec / (3600 * 24));
+        $op = $days . lang('_day_ago');
+    } elseif ($sec < 3600 * 24 * 365) {
+        $months = floor($sec / (3600 * 24 * 30));
+        $op = $months . lang('_month_ago');
+    } elseif ($sec < 3600 * 24 * 365 * 5) {
+        $years = floor($sec / (3600 * 24 * 365));
+        $op = $years . lang('_year_ago');
     } else {
         $op = date($format, $timestamp);
     }
     return $op;
 }
 
-function getRandStr($length = 12, $special_chars = true) {
-    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    if ($special_chars) {
-        $chars .= '!@#$%^&*()';
+function getRandStr($length = 12, $special_chars = true, $numeric_only = false)
+{
+    if ($numeric_only) {
+        $chars = '0123456789';
+    } else {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        if ($special_chars) {
+            $chars .= '!@#$%^&*()';
+        }
     }
     $randStr = '';
+    $chars_length = strlen($chars);
     for ($i = 0; $i < $length; $i++) {
-        $randStr .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+        $randStr .= substr($chars, em_rand(0, $chars_length - 1), 1);
     }
     return $randStr;
+}
+
+function em_rand($min = 0, $max = 0)
+{
+    if (function_exists('random_int')) {
+        try {
+            return random_int($min, $max);
+        } catch (Exception $e) {
+            // Continue to use other methods in case of failure
+        }
+    }
+    return mt_rand($min, $max);
 }
 
 /**
@@ -395,33 +466,17 @@ function getRandStr($length = 12, $special_chars = true) {
  * @param $attach array File information
  * @param $result array Upload result
  */
-function upload2local($attach, &$result) {
+function upload2local($attach, &$result)
+{
     $fileName = $attach['name'];
-    $errorNum = $attach['error'];
     $tmpFile = $attach['tmp_name'];
     $fileSize = $attach['size'];
 
-    $isthum = Option::get('isthumbnail') === 'y';
     $fileName = Database::getInstance()->escape_string($fileName);
-    $type = Option::getAttType();
 
-    $ret = upload($fileName, $errorNum, $tmpFile, $fileSize, $type, $isthum);
+    $ret = upload($fileName, $tmpFile, $fileSize);
     $success = 0;
     switch ($ret) {
-        case '100':
-            $message = lang('file_size_exceeds_system') . ini_get('upload_max_filesize') . lang('_limit');
-            break;
-        case '101':
-        case '104':
-            $message = lang('upload_failed_error_code') . $errorNum;
-            break;
-        case '102':
-            $message = lang('file_type_not_supported');
-            break;
-        case '103':
-            $r = changeFileSize(Option::getAttMaxSize());
-            $message = lang('file_size_exceeds_') . $r . lang('_of_limit');
-            break;
         case '105':
             $message = lang('upload_folder_unwritable');
             break;
@@ -432,7 +487,7 @@ function upload2local($attach, &$result) {
     }
 
     $result = [
-        'success'   => $success, // 1 success, 0 failure
+        'success'   => $success,
         'message'   => $message,
         'url'       => $success ? getFileUrl($ret['file_path']) : '',
         'file_info' => $success ? $ret : [],
@@ -452,73 +507,72 @@ function upload2local($attach, &$result) {
  * thum_file   Thumbnail path
  *
  * @param string $fileName File Name
- * @param string $errorNum Error code: $_FILES['error']
  * @param string $tmpFile Temporary File Uploaded
  * @param string $fileSize File Size KB
- * @param array $type Allowed to upload file types
- * @param boolean $is_thumbnail Whether to generate thumbnail
- * @return array File Data Index
+ * @return array | string File Data Index
  *
  */
-function upload($fileName, $errorNum, $tmpFile, $fileSize, $type, $is_thumbnail = true) {
-    if ($errorNum == 1) {
-        return '100'; //File size exceeds the system limit
-    } elseif ($errorNum > 1) {
-        return '101'; //File upload failed
-    }
+function upload($fileName, $tmpFile, $fileSize)
+{
     $extension = getFileSuffix($fileName);
-    if (!in_array($extension, $type)) {
-        return '102'; //Incorrect file type
-    }
-    if ($fileSize > Option::getAttMaxSize()) {
-        return '103'; //File size exceeds the emlog limit
-    }
     $file_info = [];
     $file_info['file_name'] = $fileName;
     $file_info['mime_type'] = get_mimetype($extension);
     $file_info['size'] = $fileSize;
     $file_info['width'] = 0;
     $file_info['height'] = 0;
-    $uppath = Option::UPLOADFILE_PATH . gmdate('Ym') . '/';
-    $fname = substr(md5($fileName), 0, 4) . time() . '.' . $extension;
-    $attachpath = $uppath . $fname;
-    $file_info['file_path'] = $attachpath;
-    if (!is_dir(Option::UPLOADFILE_PATH)) {
-        @umask(0);
-        $ret = @mkdir(Option::UPLOADFILE_PATH, 0777);
-        if ($ret === false) {
-            return '104'; //Create the file upload directory failed
-        }
+
+    $fileName = substr(md5($fileName), 0, 4) . time() . '.' . $extension;
+
+    // The absolute path is used for reading and writing files, which is compatible with API file upload
+    $uploadFullPath = Option::UPLOADFILE_FULL_PATH . gmdate('Ym') . '/';
+    $uploadFullFile = $uploadFullPath . $fileName;
+    $thumFullFile = $uploadFullPath . 'thum-' . $fileName;
+
+    // The output file information uses a relative path, compatible with business scenarios such as avatar upload
+    $uploadPath = Option::UPLOADFILE_PATH . gmdate('Ym') . '/';
+    $uploadFile = $uploadPath . $fileName;
+    $thumFile = $uploadPath . 'thum-' . $fileName;
+
+    $file_info['file_path'] = $uploadFile;
+
+    if (!createDirectoryIfNeeded($uploadFullPath)) {
+        return '105'; // Failed to create upload directory
     }
-    if (!is_dir($uppath)) {
-        @umask(0);
-        $ret = @mkdir($uppath, 0777);
-        if ($ret === false) {
-            return '105'; //Upload failed. File upload directory (content/uploadfile) is not writable
-        }
-    }
+
     doAction('attach_upload', $tmpFile);
 
-    // Generate thumbnail
-    $thum = $uppath . 'thum-' . $fname;
-    if ($is_thumbnail && resizeImage($tmpFile, $thum, Option::get('att_imgmaxw'), Option::get('att_imgmaxh'))) {
-        $file_info['thum_file'] = $thum;
+    // Generate Thumbnail
+    $is_thumbnail = Option::get('isthumbnail') === 'y';
+    if ($is_thumbnail && resizeImage($tmpFile, $thumFullFile, Option::get('att_imgmaxw'), Option::get('att_imgmaxh'))) {
+        $file_info['thum_file'] = $thumFile;
     }
 
-    if (@is_uploaded_file($tmpFile) && @!move_uploaded_file($tmpFile, $attachpath)) {
+    // Complete upload
+    if (@is_uploaded_file($tmpFile) && @!move_uploaded_file($tmpFile, $uploadFullFile)) {
         @unlink($tmpFile);
         return '105'; //Upload failed. File upload directory (content/uploadfile) is not writable
     }
 
     // Extract image width and height
     if (in_array($file_info['mime_type'], array('image/jpeg', 'image/png', 'image/gif', 'image/bmp'))) {
-        $size = getimagesize($file_info['file_path']);
+        $size = getimagesize($uploadFullFile);
         if ($size) {
             $file_info['width'] = $size[0];
             $file_info['height'] = $size[1];
         }
     }
     return $file_info;
+}
+
+function createDirectoryIfNeeded($path)
+{
+    if (!is_dir($path)) {
+        if (!mkdir($path, 0777, true) && !is_dir($path)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -528,9 +582,10 @@ function upload($fileName, $errorNum, $tmpFile, $fileSize, $type, $is_thumbnail 
  * @param string $thum_path Generate thumbnail path
  * @param int $max_w Maximum thumbnail width px
  * @param int $max_h Maximum thumbnail height px
- * @return unknown
+ * @return bool
  */
-function resizeImage($img, $thum_path, $max_w, $max_h) {
+function resizeImage($img, $thum_path, $max_w, $max_h)
+{
     if (!in_array(getFileSuffix($thum_path), array('jpg', 'png', 'jpeg', 'gif'))) {
         return false;
     }
@@ -563,7 +618,8 @@ function resizeImage($img, $thum_path, $max_w, $max_h) {
  * @param int $src_w Original width
  * @param int $src_h Original height
  */
-function imageCropAndResize($src_image, $dst_path, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h) {
+function imageCropAndResize($src_image, $dst_path, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h)
+{
     if (!function_exists('imagecreatefromstring')) {
         return false;
     }
@@ -614,7 +670,8 @@ function imageCropAndResize($src_image, $dst_path, $dst_x, $dst_y, $src_x, $src_
  * @param int $max_h Maximum zoom Height
  * @return array
  */
-function chImageSize($img, $max_w, $max_h) {
+function chImageSize($img, $max_w, $max_h)
+{
     $size = @getimagesize($img);
     if (!$size) {
         return [];
@@ -644,11 +701,11 @@ function chImageSize($img, $max_w, $max_h) {
  * Get Gravatar Avatar
  */
 if (!function_exists('getGravatar')) {
-    function getGravatar($email, $s = 40) {
+    function getGravatar($email, $s = 120)
+    {
         $hash = md5($email);
-        //vot        $gravatar_url = "//cravatar.cn/avatar/$hash?s=$s";
-        /*vot*/
-        $gravatar_url = "//www.gravatar.com/avatar/$hash?s=$s";
+	    //待处理
+        $gravatar_url = "//cravatar.cn/avatar/$hash?s=$s";
         doOnceAction('get_Gravatar', $email, $gravatar_url);
 
         return $gravatar_url;
@@ -661,7 +718,8 @@ if (!function_exists('getGravatar')) {
  * @param $year string Year 0000
  * @return false|string
  */
-function getMonthDayNum($month, $year) {
+function getMonthDayNum($month, $year)
+{
     return date("t", strtotime($year . $month . '01'));
 }
 
@@ -672,7 +730,8 @@ function getMonthDayNum($month, $year) {
  * @param string $type
  * @return int
  */
-function emUnZip($zipfile, $path, $type = 'tpl') {
+function emUnZip($zipfile, $path, $type = 'tpl')
+{
     if (!class_exists('ZipArchive', FALSE)) {
         return 3;//zip Module problem
     }
@@ -716,7 +775,8 @@ function emUnZip($zipfile, $path, $type = 'tpl') {
 /**
  * Zip compression
  */
-function emZip($orig_fname, $content) {
+function emZip($orig_fname, $content)
+{
     if (!class_exists('ZipArchive', FALSE)) {
         return false;
     }
@@ -739,7 +799,8 @@ function emZip($orig_fname, $content) {
  * @param string $source file url
  * @return string Temporary file path
  */
-function emFetchFile($source) {
+function emFetchFile($source)
+{
     $temp_file = tempnam(EMLOG_ROOT . '/content/cache/', 'tmp_');
     $wh = fopen($temp_file, 'w+b');
 
@@ -766,7 +827,8 @@ function emFetchFile($source) {
  * @param string $source file url
  * @return string Temporary file path
  */
-function emDownFile($source) {
+function emDownFile($source)
+{
     $ctx_opt = set_ctx_option();
     $context = stream_context_create($ctx_opt);
     $content = file_get_contents($source, false, $context);
@@ -776,29 +838,26 @@ function emDownFile($source) {
 
     $temp_file = tempnam(EMLOG_ROOT . '/content/cache/', 'tmp_');
     if ($temp_file === false) {
-        /*vot*/
-        emMsg('emDownFile: Failed to create temporary file.');
+        emMsg('emDownFile：'. lang('failed_to_create_temporary_file'));
     }
     $ret = file_put_contents($temp_file, $content);
     if ($ret === false) {
-        /*vot*/
-        emMsg('emDownFile: Failed to write temporary file.');
+        emMsg('emDownFile：'. lang('failed_to_write_temporary_file'));
     }
 
     return $temp_file;
 }
 
-function set_ctx_option() {
-    $data = http_build_query(['emkey' => Option::get('emkey')]);
+function set_ctx_option()
+{
+    $emkey = Option::get('emkey');
     return [
         'http' => [
             'timeout' => 120,
-            'method'  => 'POST',
-            'header'  => "Content-type: application/x-www-form-urlencoded\r\n"
-                . "Content-Length: " . strlen($data) . "\r\n"
-                . "Referer: " . BLOG_URL . "\r\n"
+            'method'  => 'GET',
+            'header'  => "Referer: " . BLOG_URL . "\r\n"
+                . "Emkey: " . $emkey . "\r\n"
                 . "User-Agent: emlog " . Option::EMLOG_VERSION . "\r\n",
-            'content' => $data
         ],
         "ssl"  => [
             "verify_peer"      => false,
@@ -810,7 +869,8 @@ function set_ctx_option() {
 /**
  * Deleting a file or directory
  */
-function emDeleteFile($file) {
+function emDeleteFile($file)
+{
     if (empty($file)) {
         return false;
     }
@@ -840,7 +900,8 @@ function emDeleteFile($file) {
 /**
  * Page Redirection
  */
-function emDirect($directUrl) {
+function emDirect($directUrl)
+{
     header("Location: $directUrl");
     exit;
 }
@@ -852,7 +913,8 @@ function emDirect($directUrl) {
  * @param string $url Return Address
  * @param boolean $isAutoGo Whether or not auto-return true false
  */
-function emMsg($msg, $url = 'javascript:history.back(-1);', $isAutoGo = false) {
+function emMsg($msg, $url = 'javascript:history.back(-1);', $isAutoGo = false)
+{
     if ($msg == '404') {
         header("HTTP/1.1 404 Not Found");
         $msg = lang('404_description');
@@ -865,6 +927,10 @@ function emMsg($msg, $url = 'javascript:history.back(-1);', $isAutoGo = false) {
 <html lang="$lang" dir="$dir">
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="applicable-device" content="pc,mobile">
 EOT;
     if ($isAutoGo) {
         echo "<meta http-equiv=\"refresh\" content=\"2;url=$url\" />";
@@ -873,21 +939,40 @@ EOT;
 <title>$title</title>
 <style>
 body {
-    background-color:#4e73df;
+    background-color:#f8f9fc;
     font-family: Arial;
     font-size: 12px;
     line-height:150%;
 }
 .main {
-    background-color:#FFFFFF;
-    font-size: 12px;
-    color: #666666;
-    width:650px;
-    margin:60px auto 0px;
-    border-radius: 10px;
-    padding:10px;
-    list-style:none;
-    border:#DFDFDF 1px solid;
+    background-color: #ffffff;
+    font-size: 14px;
+    color: #333333;
+    width: 650px;
+    margin: 80px auto 0;
+    border-radius: 8px;
+    padding: 20px;
+    list-style: none;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.main p {
+    margin: 16px 0;
+    color: #444444;
+}
+
+.main a {
+    color: #1890ff;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.main a:hover {
+    color: #40a9ff;
+    text-decoration: underline;
 }
 .main p {
     line-height: 18px;
@@ -895,6 +980,11 @@ body {
 }
 a {
     color: #333333;
+}
+@media (max-width: 768px) {
+    .main{
+        width: unset;   
+    }
 }
 </style>
 </head>
@@ -913,7 +1003,9 @@ EOT;
     exit;
 }
 
-function show_404_page($show_404_only = false) {
+function show_404_page($show_404_only = false)
+{
+    doAction('page_not_found');
     if ($show_404_only) {
         header("HTTP/1.1 404 Not Found");
         exit;
@@ -937,7 +1029,8 @@ function show_404_page($show_404_only = false) {
  * @return unknown
  */
 if (!function_exists('hash_hmac')) {
-    function hash_hmac($algo, $data, $key) {
+    function hash_hmac($algo, $data, $key)
+    {
         $packs = array('md5' => 'H32', 'sha1' => 'H40');
 
         if (!isset($packs[$algo])) {
@@ -962,65 +1055,61 @@ if (!function_exists('hash_hmac')) {
 /**
  * Get the MIME type based on the file extension
  */
-function get_mimetype($extension) {
-    $ct['htm'] = 'text/html';
-    $ct['html'] = 'text/html';
+function get_mimetype($extension)
+{
     $ct['txt'] = 'text/plain';
     $ct['asc'] = 'text/plain';
+    $ct['css'] = 'text/css';
+    $ct['htm'] = 'text/html';
+    $ct['html'] = 'text/html';
+    $ct['js'] = 'application/x-javascript';
+    $ct['xhtml'] = 'application/xhtml+xml';
+    $ct['xml'] = 'text/xml';
+    $ct['xsl'] = 'text/xml';
+    $ct['wml'] = 'text/vnd.wap.wml';
+    $ct['wmls'] = 'text/vnd.wap.wmlscript';
+    $ct['rtf'] = 'text/rtf';
     $ct['bmp'] = 'image/bmp';
     $ct['gif'] = 'image/gif';
     $ct['jpeg'] = 'image/jpeg';
     $ct['jpg'] = 'image/jpeg';
     $ct['jpe'] = 'image/jpeg';
     $ct['png'] = 'image/png';
+    $ct['webp'] = 'image/webp';
+    $ct['svg'] = 'image/svg+xml';
+    $ct['avif'] = 'image/avif';
+    $ct['tiff'] = 'image/tiff';
+    $ct['tif'] = 'image/tiff';
     $ct['ico'] = 'image/vnd.microsoft.icon';
-    $ct['mpeg'] = 'video/mpeg';
+    $ct['midi'] = 'audio/midi';
+    $ct['mid'] = 'audio/midi';
+    $ct['mp3'] = 'audio/mpeg';
+    $ct['wav'] = 'audio/x-wav';
     $ct['mpg'] = 'video/mpeg';
+    $ct['mpeg'] = 'video/mpeg';
     $ct['mpe'] = 'video/mpeg';
     $ct['qt'] = 'video/quicktime';
+    $ct['webm'] = 'video/webm';
     $ct['mov'] = 'video/quicktime';
     $ct['avi'] = 'video/x-msvideo';
     $ct['wmv'] = 'video/x-ms-wmv';
-    $ct['mp2'] = 'audio/mpeg';
-    $ct['mp3'] = 'audio/mpeg';
-    $ct['rm'] = 'audio/x-pn-realaudio';
-    $ct['ram'] = 'audio/x-pn-realaudio';
-    $ct['rpm'] = 'audio/x-pn-realaudio-plugin';
-    $ct['ra'] = 'audio/x-realaudio';
-    $ct['wav'] = 'audio/x-wav';
-    $ct['css'] = 'text/css';
-    $ct['zip'] = 'application/zip';
-    $ct['pdf'] = 'application/pdf';
-    $ct['doc'] = 'application/msword';
+    $ct['mp4'] = 'video/mp4';
+    $ct['mkv'] = 'video/x-matroska';
     $ct['bin'] = 'application/octet-stream';
-    $ct['exe'] = 'application/octet-stream';
     $ct['class'] = 'application/octet-stream';
     $ct['dll'] = 'application/octet-stream';
-    $ct['xls'] = 'application/vnd.ms-excel';
+    $ct['dvi'] = 'application/x-dvi';
+    $ct['exe'] = 'application/octet-stream';
+    $ct['gtar'] = 'application/x-gtar';
+    $ct['gzip'] = 'application/x-gzip';
+    $ct['pdf'] = 'application/pdf';
+    $ct['doc'] = 'application/msword';
     $ct['ppt'] = 'application/vnd.ms-powerpoint';
     $ct['wbxml'] = 'application/vnd.wap.wbxml';
     $ct['wmlc'] = 'application/vnd.wap.wmlc';
     $ct['wmlsc'] = 'application/vnd.wap.wmlscriptc';
-    $ct['dvi'] = 'application/x-dvi';
-    $ct['spl'] = 'application/x-futuresplash';
-    $ct['gtar'] = 'application/x-gtar';
-    $ct['gzip'] = 'application/x-gzip';
-    $ct['js'] = 'application/x-javascript';
-    $ct['swf'] = 'application/x-shockwave-flash';
-    $ct['tar'] = 'application/x-tar';
-    $ct['xhtml'] = 'application/xhtml+xml';
-    $ct['au'] = 'audio/basic';
-    $ct['snd'] = 'audio/basic';
-    $ct['midi'] = 'audio/midi';
-    $ct['mid'] = 'audio/midi';
-    $ct['m3u'] = 'audio/x-mpegurl';
-    $ct['tiff'] = 'image/tiff';
-    $ct['tif'] = 'image/tiff';
-    $ct['rtf'] = 'text/rtf';
-    $ct['wml'] = 'text/vnd.wap.wml';
-    $ct['wmls'] = 'text/vnd.wap.wmlscript';
-    $ct['xsl'] = 'text/xml';
-    $ct['xml'] = 'text/xml';
+    $ct['xls'] = 'application/vnd.ms-excel';
+    $ct['zip'] = 'application/zip';
 
     return isset($ct[strtolower($extension)]) ? $ct[strtolower($extension)] : 'text/html';
 }
@@ -1028,7 +1117,8 @@ function get_mimetype($extension) {
 /**
  * Convert a string to a time zone independent UNIX timestamp
  */
-function emStrtotime($timeStr) {
+function emStrtotime($timeStr)
+{
     if (!$timeStr) {
         return false;
     }
@@ -1061,7 +1151,8 @@ function emStrtotime($timeStr) {
 /**
  * Load jQuery
  */
-function emLoadJQuery() {
+function emLoadJQuery()
+{
     static $isJQueryLoaded = false;
     if (!$isJQueryLoaded) {
         global $emHooks;
@@ -1071,7 +1162,8 @@ function emLoadJQuery() {
         array_unshift($emHooks['index_head'], 'loadJQuery');
         $isJQueryLoaded = true;
 
-        function loadJQuery() {
+        function loadJQuery()
+        {
             echo '<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>';
         }
     }
@@ -1084,7 +1176,8 @@ function emLoadJQuery() {
  *
  * @throws Exception
  */
-function getTimeZoneOffset($remote_tz, $origin_tz = 'UTC') {
+function getTimeZoneOffset($remote_tz, $origin_tz = 'UTC')
+{
     if (($origin_tz === null) && !is_string($origin_tz = date_default_timezone_get())) {
         return false; // A UTC timestamp was returned -- bail out!
     }
@@ -1098,30 +1191,33 @@ function getTimeZoneOffset($remote_tz, $origin_tz = 'UTC') {
 /**
  * Upload the cut pictures (cover and avatar)
  */
-function uploadCropImg() {
+function uploadCropImg()
+{
     $attach = isset($_FILES['image']) ? $_FILES['image'] : '';
-    if (!$attach || $attach['error'] === 4) {
-        echo "error";
-        exit;
+
+    $uploadCheckResult = Media::checkUpload($attach);
+    if ($uploadCheckResult !== true) {
+        Output::error($uploadCheckResult);
     }
 
     $ret = '';
     upload2local($attach, $ret);
     if (empty($ret['success'])) {
-        echo "error";
-        exit;
+        Output::error($ret['message']);
     }
     return $ret;
 }
 
 if (!function_exists('split')) {
-    function split($str, $delimiter) {
+    function split($str, $delimiter)
+    {
         return preg_split($str, $delimiter);
     }
 }
 
 if (!function_exists('get_os')) {
-    function get_os($user_agent) {
+    function get_os($user_agent)
+    {
         if (false !== stripos($user_agent, "win")) {
             $os = 'Windows';
         } else if (false !== stripos($user_agent, "mac")) {
@@ -1140,7 +1236,8 @@ if (!function_exists('get_os')) {
 }
 
 if (!function_exists('get_browse')) {
-    function get_browse($user_agent) {
+    function get_browse($user_agent)
+    {
         if (false !== stripos($user_agent, "MSIE")) {
             $br = 'MSIE';
         } else if (false !== stripos($user_agent, "Edg")) {
@@ -1157,6 +1254,44 @@ if (!function_exists('get_browse')) {
             $br = 'unknown';
         }
         return $br;
+    }
+}
+
+// Get the first picture in the content
+if (!function_exists('getFirstImage')) {
+    function getFirstImage($content)
+    {
+        // Match pictures in Markdown
+        preg_match('/!\[.*?\]\((.*?)\)/', $content, $matches);
+
+        if (!empty($matches[1])) {
+            return $matches[1];
+        }
+
+        // Match pictures in HTML
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($content);
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($dom);
+        $imgNode = $xpath->query('//img')->item(0);
+
+        if ($imgNode) {
+            return $imgNode->getAttribute('src');
+        }
+
+        return null;
+    }
+}
+
+// Check whether PHP supports GD graphics library
+function checkGDSupport()
+{
+    if (function_exists("gd_info") && function_exists('imagepng')) {
+        return true;
+    } else {
+        return false;
     }
 }
 

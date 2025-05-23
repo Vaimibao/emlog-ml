@@ -20,7 +20,8 @@
   overflow: hidden;
   position: relative;
   margin-bottom: 15px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--muted-border-color);
+  border-radius: var(--main-radius);
   font-family: "Meiryo UI", "Microsoft YaHei", "Malgun Gothic", "Segoe UI", "Trebuchet MS", Helvetica, "Monaco", monospace, Tahoma, STXihei, "华文细黑", STHeiti, "Helvetica Neue", "Droid Sans", "wenquanyi micro hei", FreeSans, Arimo, Arial, SimSun, "宋体", Heiti, "黑体", sans-serif;
 }
 .editormd *, .editormd *:before, .editormd *:after {
@@ -97,13 +98,13 @@
 .editormd-toolbar {
   width: 100%;
   min-height: 37px;
-  background: #fff;
+  background: var(--main-bg-color);
   display: none;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--muted-border-color);
 }
 
 .editormd-toolbar-container {
@@ -132,7 +133,7 @@
   text-indent: -9999px;
   margin: 0 5px;
   height: 65%;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--muted-border-color);
 }
 .editormd-menu > li > a {
   outline: 0;
@@ -1169,6 +1170,10 @@
 
 .fa-video-camera:before {
   content: "\f03d";
+}
+
+.fa-audio:before {
+  content: "\f001";
 }
 
 .fa-photo:before,

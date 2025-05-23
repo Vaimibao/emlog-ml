@@ -98,7 +98,6 @@
         delay: 300,            // Delay parse markdown to html, Uint : ms
         autoLoadModules: true,           // Automatic load dependent module files
         watch: true,
-//lang  placeholder          : "Enjoy Markdown coding now...",//"使用 Markdown 开始你的创作...",
         gotoLine: true,
         codeFold: false,
         autoHeight: false,
@@ -214,6 +213,7 @@
             "reference-link": "fa-anchor",
             image: "fa-picture-o",
             video: "fa-video-camera",
+            audio: "fa-audio",
             code: "fa-code",
             "preformatted-text": "fa-file-code-o",
             "code-block": "fa-file-code-o",
@@ -238,9 +238,6 @@
             name: "zh-cn",
             description: "开源在线Markdown编辑器<br/>Open source online Markdown editor.",
             tocTitle: "目录",
-            placeholder: "Enjoy Markdown! coding now...",//"使用 Markdown! 开始你的创作...",
-            weekDays: ["日", "一", "二", "三", "四", "五", "六"],
-            wdPrefix: "星期",//Only for Chinese! Set EMPTY for others
             toolbar: {
                 undo: "撤销（Ctrl+Z）",
                 redo: "重做（Ctrl+Y）",
@@ -264,6 +261,7 @@
                 "reference-link": "引用链接",
                 image: "添加图片",
                 video: "添加视频",
+                audio: "添加音频",
                 code: "行内代码",
                 "preformatted-text": "预格式文本 / 代码块（缩进风格）",
                 "code-block": "代码块（多语言风格）",
@@ -321,6 +319,14 @@
                     videoURLEmpty: "错误：视频地址不能为空。",
                     uploadFileEmpty: "错误：上传的视频不能为空。",
                     formatNotAllowed: "错误：只允许上传视频文件，允许上传的视频文件格式有："
+                },
+                audio: {
+                    title: "添加音频",
+                    url: "音频地址(如MP3)",
+                    uploadButton: "本地上传",
+                    videoURLEmpty: "错误：音频地址不能为空。",
+                    uploadFileEmpty: "错误：上传的音频不能为空。",
+                    formatNotAllowed: "错误：只允许上传音频文件，允许上传的音频文件格式有："
                 },
                 preformattedText: {
                     title: "添加预格式文本或代码块",
@@ -429,7 +435,6 @@
 
             if (typeof markdownTextarea.attr("name") === "undefined" || markdownTextarea.attr("name") === "") {
                 markdownTextarea.attr("name", (settings.name !== "") ? settings.name : id);
-//lang           markdownTextarea.attr("name", (settings.name !== "") ? settings.name : id + "-markdown-doc");
             }
 
             var appendElements = [
@@ -2948,6 +2953,10 @@
             this.executePlugin("imageDialog", "image-dialog/image-dialog");
         },
 
+        audio: function () {
+            this.executePlugin("audioDialog", "audio-dialog/audio-dialog");
+        },
+
         video: function () {
             this.executePlugin("videoDialog", "video-dialog/video-dialog");
         },
@@ -4311,15 +4320,15 @@
 
             case "cn-week-day" :
             case "cn-wd" :
-//lang               var cnWeekDays = ["日", "一", "二", "三", "四", "五", "六"];
-//lang               datefmt = "星期" + cnWeekDays[weekDay];
-//lang                break;
+                // var cnWeekDays = ["日", "一", "二", "三", "四", "五", "六"];
+                // datefmt = "星期" + cnWeekDays[weekDay];
+                // break;
 
             case "week-day" :
             case "wd" :
-//lang               var weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-//lang               datefmt = weekDays[weekDay];
-                datefmt = wdPrefix + this.lang.weekDays[weekDay];
+                // var weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                // datefmt = weekDays[weekDay];
+                datefmt = this.lang.wdPrefix + this.lang.weekDays[weekDay];
                 break;
 
             case "day" :

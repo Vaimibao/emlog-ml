@@ -1,8 +1,6 @@
-<?php if (!defined('EMLOG_ROOT')) {
-    exit('error!');
-} ?>
-<h1 class="h3 mb-4 text-gray-800"><?= lang('nav_modify') ?></h1>
-<div class="card shadow mb-4 mt-2">
+<?php defined('EMLOG_ROOT') || exit('access denied!'); ?>
+<h1 class="h4 pt-3 mb-4 text-gray-800"><?= lang('nav_modify') ?></h1>
+<div class="card mt-2">
     <div class="card-body">
         <form action="navbar.php?action=update" method="post" id="sort_new">
             <div class="form-group">
@@ -14,8 +12,8 @@
                 <input class="form-control" id="url" value="<?= $url ?>" name="url" <?= $conf_isdefault ?>>
             </div>
             <div class="form-group">
-                <label><?= lang('open_new_win') ?></label>
-                <input type="checkbox" value="y" name="newtab" <?= $conf_newtab ?> />
+                <input type="checkbox" value="y" name="newtab" id="newtab" <?= $conf_newtab ?> />
+                <label for="newtab"><?= lang('open_new_win') ?></label>
             </div>
             <?php if ($type == Navi_Model::navitype_custom && $pid != 0): ?>
                 <div class="form-group">

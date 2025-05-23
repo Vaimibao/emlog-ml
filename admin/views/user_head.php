@@ -1,8 +1,7 @@
-<?php if (!defined('EMLOG_ROOT')) {
-    exit('error!');
-} ?>
+<?php defined('EMLOG_ROOT') || exit('access denied!'); ?>
 <!doctype html>
 <html lang="zh-cn">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -13,5 +12,7 @@
     <script src="./views/js/jquery.min.3.5.1.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/js/bootstrap.bundle.min.4.6.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/js/common.js?v=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
+    <?php doAction('login_head') ?>
 </head>
-<body class="bg-gradient-primary">
+
+<body class="bg-gradient-gray">

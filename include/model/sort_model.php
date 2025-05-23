@@ -1,68 +1,124 @@
 <?php
+
 /**
- * Model: Blog Categories
+ * article sort model
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Sort_Model {
+class Sort_Model
+{
 
     private $db;
+    private $table;
+    private $table_blog;
 
-    function __construct() {
+    function __construct()
+    {
+        $this->table = DB_PREFIX . 'sort';
+        $this->table_blog = DB_PREFIX . 'blog';
         $this->db = Database::getInstance();
     }
 
-    function getSorts() {
-        $res = $this->db->query("SELECT * FROM " . DB_PREFIX . "sort ORDER BY taxis ASC");
+    function getSorts()
+    {
         $sorts = [];
-        while ($row = $this->db->fetch_array($res)) {
-            $row['sortname'] = htmlspecialchars($row['sortname']);
-            $sorts[] = $row;
+        $query = $this->db->query("SELECT * FROM $this->table ORDER BY pid ASC,taxis ASC");
+        while ($row = $this->db->fetch_array($query)) {
+            $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM $this->table_blog WHERE sortid=" . $row['sid'] . " AND hide='n' AND checked='y' AND type='blog'");
+            $logNum = $data['total'];
+            $sortData = array(
+                'lognum'       => $logNum,
+                'sortname'     => htmlspecialchars($row['sortname']),
+                'alias'        => $row['alias'],
+                'description'  => htmlspecialchars($row['description']),
+                'kw'           => htmlspecialchars($row['kw']),
+                'title_origin' => $row['title'],
+                'title'        => htmlspecialchars(Sort::formatSortTitle($row['title'], $row['sortname'])),
+                'sid'          => (int)$row['sid'],
+                'taxis'        => (int)$row['taxis'],
+                'pid'          => (int)$row['pid'],
+                'template'     => htmlspecialchars($row['template']),
+                'sortimg'      => htmlspecialchars($row['sortimg']),
+                'page_count'   => (int)$row['page_count']
+            );
+            if ($sortData['pid'] == 0) {
+                $sortData['children'] = [];
+            } elseif (isset($sorts[$row['pid']])) {
+                $sorts[$row['pid']]['children'][] = $row['sid'];
+            }
+            $sorts[$row['sid']] = $sortData;
         }
         return $sorts;
     }
 
-    function updateSort($sortData, $sid) {
+    function updateSort($sortData, $sid)
+    {
         $Item = [];
         foreach ($sortData as $key => $data) {
             $Item[] = "$key='$data'";
         }
         $upStr = implode(',', $Item);
-/*vot*/        $this->db->query("UPDATE " . DB_PREFIX . "sort SET $upStr WHERE sid=$sid");
+        $this->db->query("update $this->table set $upStr where sid=$sid");
     }
 
-    function addSort($name, $alias, $pid, $description, $template) {
-/*vot*/        $sql = "INSERT INTO " . DB_PREFIX . "sort (sortname,alias,pid,description,template) VALUES('$name','$alias',$pid,'$description', '$template')";
-        $this->db->query($sql);
+    public function addSort($data)
+    {
+        $kItem = $dItem = [];
+        foreach ($data as $key => $val) {
+            $kItem[] = $key;
+            $dItem[] = $val;
+        }
+        $field = implode(',', $kItem);
+        $values = "'" . implode("','", $dItem) . "'";
+        $this->db->query("INSERT INTO $this->table ($field) VALUES ($values)");
+        return $this->db->insert_id();
     }
 
-    function deleteSort($sid) {
-/*vot*/        $this->db->query("UPDATE " . DB_PREFIX . "blog SET sortid=-1 WHERE sortid=$sid");
-/*vot*/        $this->db->query("UPDATE " . DB_PREFIX . "sort SET pid=0 WHERE pid=$sid");
-/*vot*/        $this->db->query("DELETE FROM " . DB_PREFIX . "sort WHERE sid=$sid");
+    function deleteSort($sid)
+    {
+        $this->db->query("update $this->table_blog set sortid=-1 where sortid=$sid");
+        $this->db->query("update $this->table set pid=0 where pid=$sid");
+        $this->db->query("DELETE FROM $this->table where sid=$sid");
     }
 
-    function getOneSortById($sid) {
-/*vot*/        $sql = "SELECT * FROM " . DB_PREFIX . "sort WHERE sid=$sid";
+    function getOneSortById($sid)
+    {
+        $sql = "select * from $this->table where sid=$sid";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
         $sortData = [];
         if ($row) {
             $sortData = array(
-                'sortname'    => htmlspecialchars(trim($row['sortname'])),
-                'alias'       => $row['alias'],
-                'pid'         => $row['pid'],
-                'description' => htmlspecialchars(trim($row['description'])),
-                'template'    => !empty($row['template']) ? htmlspecialchars(trim($row['template'])) : 'log_list',
+                'sortname'     => htmlspecialchars(trim($row['sortname'])),
+                'alias'        => $row['alias'],
+                'pid'          => $row['pid'],
+                'title_origin' => $row['title'],
+                'title'        => htmlspecialchars(Sort::formatSortTitle($row['title'], $row['sortname'])),
+                'kw'           => htmlspecialchars($row['kw']),
+                'description'  => htmlspecialchars(trim($row['description'])),
+                'template'     => !empty($row['template']) ? htmlspecialchars(trim($row['template'])) : 'log_list',
+                'sortimg'      => htmlspecialchars(trim($row['sortimg'])),
             );
         }
         return $sortData;
     }
 
-    function getSortName($sid) {
+    function getSortByAlias($alias)
+    {
+        if (empty($alias)) {
+            return [];
+        }
+        $alias = addslashes($alias);
+        $res = $this->db->query("SELECT * FROM $this->table WHERE alias = '$alias'");
+        $row = $this->db->fetch_array($res);
+        return $row;
+    }
+
+    function getSortName($sid)
+    {
         if ($sid > 0) {
-            $res = $this->db->query("SELECT sortname FROM " . DB_PREFIX . "sort WHERE sid = $sid");
+            $res = $this->db->query("SELECT sortname FROM $this->table WHERE sid = $sid");
             $row = $this->db->fetch_array($res);
             $sortName = htmlspecialchars($row['sortname']);
         } else {

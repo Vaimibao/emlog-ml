@@ -1,8 +1,9 @@
 <?php
+
 /**
  * sort manager
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -13,9 +14,10 @@
 require_once 'globals.php';
 
 $Sort_Model = new Sort_Model();
-$sorts = $CACHE->readCache('sort');
 
 if (empty($action)) {
+    $sorts = $Sort_Model->getSorts();
+
     $Template_Model = new Template_Model();
     $customTemplates = $Template_Model->getCustomTemplates('sort');
 
@@ -26,40 +28,54 @@ if (empty($action)) {
 }
 
 if ($action == 'taxis') {
-    $sort = isset($_POST['sort']) ? $_POST['sort'] : '';
+    $sort = Input::postStrArray('sort', []);
 
     if (empty($sort)) {
-        emDirect("./sort.php?error_b=1");
+        Output::error(lang('category_no_order'));
     }
+
     foreach ($sort as $key => $value) {
         $value = (int)$value;
         $key = (int)$key;
         $Sort_Model->updateSort(array('taxis' => $key), $value);
     }
-    $CACHE->updateCache('sort');
-    $CACHE->updateCache('navi');
-    emDirect("./sort.php?active_taxis=1");
+
+    $CACHE->updateCache(['sort', 'navi']);
+    Output::ok();
 }
 
-if ($action == 'add') {
-    $sortname = isset($_POST['sortname']) ? addslashes(trim($_POST['sortname'])) : '';
-    $alias = isset($_POST['alias']) ? addslashes(trim($_POST['alias'])) : '';
-    $pid = isset($_POST['pid']) ? (int)$_POST['pid'] : 0;
-    $template = isset($_POST['template']) && $_POST['template'] != 'log_list' ? addslashes(trim($_POST['template'])) : '';
-    $description = isset($_POST['description']) ? addslashes(trim($_POST['description'])) : '';
+if ($action == 'save') {
+    $sid = Input::postIntVar('sid');
+    $sortname = Input::postStrVar('sortname');
+    $alias = Input::postStrVar('alias');
+    $pid = Input::postIntVar('pid');
+    $template = Input::postStrVar('template') != 'log_list' ? Input::postStrVar('template') : '';
+    $description = Input::postStrVar('description');
+    $kw = Input::postStrVar('kw');
+    $title = Input::postStrVar('title');
+    $sortimg = Input::postStrVar('sortimg');
+    $page_count = Input::postIntVar('page_count');
 
     if (empty($sortname)) {
         emDirect("./sort.php?error_a=1");
     }
+
+    if ($sid && $sid == $pid) {
+        emDirect("./sort.php?error_f=1");
+    }
+
     if (!empty($alias)) {
         if (!preg_match("|^[\w-]+$|", $alias)) {
             emDirect("./sort.php?error_c=1");
         } elseif (preg_match("|^[0-9]+$|", $alias)) {
-            emDirect("./sort.php?error_f=1");
-        } elseif (in_array($alias, array('post', 'record', 'sort', 'tag', 'author', 'page'))) {
+            emDirect("./sort.php?error_c=1");
+        } elseif (in_array($alias, array('post', 'record', 'sort', 'tag', 'author', 'page', 'posts'))) {
             emDirect("./sort.php?error_e=1");
         } else {
             $sort_cache = $CACHE->readCache('sort');
+            if ($sid) {
+                unset($sort_cache[$sid]);
+            }
             foreach ($sort_cache as $key => $value) {
                 if ($alias == $value['alias']) {
                     emDirect("./sort.php?error_d=1");
@@ -67,78 +83,37 @@ if ($action == 'add') {
             }
         }
     }
-    if ($pid != 0 && !isset($sorts[$pid])) {
-        $pid = 0;
+
+    $sort_data = [
+        'sortname'    => $sortname,
+        'pid'         => $pid,
+        'template'    => $template,
+        'description' => $description,
+        'kw'          => $kw,
+        'title'       => $title,
+        'alias'       => $alias,
+        'sortimg'     => $sortimg,
+        'page_count'     => $page_count
+    ];
+
+    if ($sid) {
+        $Sort_Model->updateSort($sort_data, $sid);
+    } else {
+        $Sort_Model->addSort($sort_data);
     }
 
-    $Sort_Model->addSort($sortname, $alias, $pid, $description, $template);
-    $CACHE->updateCache(array('sort', 'navi'));
-    emDirect("./sort.php?active_add=1");
-}
+    doAction('save_sort', $sid, $sort_data);
 
-if ($action == 'mod_sort') {
-    $sid = isset($_GET['sid']) ? (int)$_GET['sid'] : '';
-
-    $Template_Model = new Template_Model();
-    $customTemplates = $Template_Model->getCustomTemplates('sort');
-
-    $sortData = $Sort_Model->getOneSortById($sid);
-    extract($sortData);
-
-    include View::getAdmView('header');
-    require_once(View::getAdmView('sort_edit'));
-    include View::getAdmView('footer');
-    View::output();
-}
-
-if ($action == 'update') {
-    $sid = isset($_POST['sid']) ? (int)$_POST['sid'] : '';
-    $sortname = isset($_POST['sortname']) ? addslashes(trim($_POST['sortname'])) : '';
-    $pid = isset($_POST['pid']) ? (int)$_POST['pid'] : 0;
-    $template = isset($_POST['template']) && $_POST['template'] != 'log_list' ? addslashes(trim($_POST['template'])) : '';
-    $description = isset($_POST['description']) ? addslashes(trim($_POST['description'])) : '';
-
-    $sort_data = [];
-    if (empty($sortname)) {
-        emDirect("./sort.php?action=mod_sort&sid={$sid}&error_a=1");
-    }
-    $sort_data['sortname'] = $sortname;
-    $sort_data['pid'] = $pid;
-    $sort_data['template'] = $template;
-    $sort_data['description'] = $description;
-
-    if (isset($_POST['alias'])) {
-        $sort_data['alias'] = addslashes(trim($_POST['alias']));
-        if (!empty($sort_data['alias'])) {
-            if (!preg_match("|^[\w-]+$|", $sort_data['alias'])) {
-                emDirect("./sort.php?action=mod_sort&sid={$sid}&error_c=1");
-            } elseif (preg_match("|^[0-9]+$|", $sort_data['alias'])) {
-                emDirect("././sort.php?action=mod_sort&sid={$sid}&error_c=1");
-            } elseif (in_array($sort_data['alias'], array('post', 'record', 'sort', 'tag', 'author', 'page'))) {
-                emDirect("././sort.php?action=mod_sort&sid={$sid}&error_e=1");
-            } else {
-                $sort_cache = $CACHE->readCache('sort');
-                unset($sort_cache[$sid]);
-                foreach ($sort_cache as $key => $value) {
-                    if ($sort_data['alias'] == $value['alias']) {
-                        emDirect("././sort.php?action=mod_sort&sid={$sid}&error_d=1");
-                    }
-                }
-            }
-        }
-    }
-
-    $Sort_Model->updateSort($sort_data, $sid);
-    $CACHE->updateCache(array('sort', 'logsort', 'navi'));
-    emDirect("./sort.php?active_edit=1");
+    $CACHE->updateCache(['sort', 'logsort', 'navi']);
+    emDirect("./sort.php?active_save=1");
 }
 
 if ($action == 'del') {
-    $sid = isset($_GET['sid']) ? (int)$_GET['sid'] : '';
+    $sid = Input::getIntVar('sid');
 
     LoginAuth::checkToken();
 
     $Sort_Model->deleteSort($sid);
-    $CACHE->updateCache(array('sort', 'logsort', 'navi'));
-    emDirect("./sort.php?active_del=1");
+    $CACHE->updateCache(['sort', 'logsort', 'navi']);
+    emDirect("./sort.php");
 }

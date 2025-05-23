@@ -1,13 +1,16 @@
 <?php
+
 /**
  * Template model
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Template_Model {
+class Template_Model
+{
 
-    function getTemplates() {
+    function getTemplates()
+    {
         $nonce_template = Option::get('nonce_templet');
 
         $templates = [];
@@ -34,6 +37,9 @@ class Template_Model {
                 'author_url' => !empty($authorUrl[1]) ? subString(strip_tags(trim($authorUrl[1])), 0, 75) : '',
             ];
 
+            $previewPath = TPLS_PATH . $file . '/preview.jpg';
+            $tplInfo['preview'] = file_exists($previewPath) ? (TPLS_URL . $file . '/preview.jpg') : './views/images/theme.png';
+
             if ($nonce_template === $file) {
                 $templates[0] = $tplInfo;
             } else {
@@ -46,7 +52,8 @@ class Template_Model {
         return $templates;
     }
 
-    function getCustomTemplates($type) {
+    function getCustomTemplates($type)
+    {
         $nonce_template = Option::get('nonce_templet') . '/';
         if (!is_dir(TPLS_PATH . $nonce_template)) {
             return false;
@@ -71,12 +78,39 @@ class Template_Model {
                         ];
                     }
                     break;
+                case 'log':
+                    if (strpos($file, 'echo_log_') === 0 && strpos($file, '.php') !== false) {
+                        $php_files[] = [
+                            'filename' => str_replace('.php', '', $file),
+                            'comment'  => $this->getTemplateComment($file),
+                        ];
+                    }
+                    break;
             }
         }
         return $php_files;
     }
 
-    function getTemplateComment($filename) {
+    function getCustomFields()
+    {
+        $nonce_template = Option::get('nonce_templet') . '/';
+        if (!is_dir(TPLS_PATH . $nonce_template)) {
+            return false;
+        }
+
+        $customFieldsPath = TPLS_PATH . $nonce_template . 'custom_fields.php';
+        if (file_exists($customFieldsPath)) {
+            include $customFieldsPath;
+            if (isset($custom_fields)) {
+                return $custom_fields;
+            }
+        }
+
+        return [];
+    }
+
+    function getTemplateComment($filename)
+    {
         $nonce_template = Option::get('nonce_templet') . '/';
         $comment = '';
         $file = fopen(TPLS_PATH . $nonce_template . $filename, 'rb');
@@ -96,4 +130,39 @@ class Template_Model {
         return $comment;
     }
 
+    // init callback
+    public function initCallback($tplName)
+    {
+        $callback_file = "../content/templates/$tplName/callback.php";
+        if (file_exists($callback_file)) {
+            require_once $callback_file;
+            if (function_exists('callback_init')) {
+                callback_init();
+            }
+        }
+    }
+
+    // delete callback
+    public function rmCallback($tplName)
+    {
+        $callback_file = "../content/templates/$tplName/callback.php";
+        if (file_exists($callback_file)) {
+            require_once $callback_file;
+            if (function_exists('callback_rm')) {
+                callback_rm();
+            }
+        }
+    }
+
+    // upgrade callback
+    public function upCallback($tplName)
+    {
+        $callback_file = "../content/templates/$tplName/callback.php";
+        if (file_exists($callback_file)) {
+            require_once $callback_file;
+            if (function_exists('callback_up')) {
+                callback_up();
+            }
+        }
+    }
 }

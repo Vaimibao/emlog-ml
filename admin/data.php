@@ -1,8 +1,9 @@
 <?php
+
 /**
  * data backup
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -21,19 +22,16 @@ if (!$action) {
 
 if ($action === 'backup') {
     LoginAuth::checkToken();
-    $zipbak = isset($_POST['zipbak']) ? $_POST['zipbak'] : 'n';
 
     $DB = Database::getInstance();
     $tables = $DB->listTables();
-
-    doAction('data_backup');
 
     $bakfname = 'emlog_' . date('Ymd') . '_' . substr(md5(AUTH_KEY . uniqid('', true)), 0, 18);
     $filename = '';
     $sqldump = '';
 
     foreach ($tables as $table) {
-        $sqldump .= dataBak($table);
+        $sqldump .= exportData($table);
     }
 
     $dumpfile = '#version:emlog ' . Option::EMLOG_VERSION . "\n";
@@ -43,25 +41,23 @@ if ($action === 'backup') {
     $dumpfile .= "\n#the end of backup";
 
     $filename = 'emlog_' . Option::EMLOG_VERSION . '_' . date('Ymd_His');
-    if ($zipbak == 'y') {
-        if (($dumpfile = emZip($filename . '.sql', $dumpfile)) === false) {
-            emDirect('./data.php?error_f=1');
-        }
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename=' . $filename . '.zip');
-    } else {
-        header('Content-Type: text/x-sql');
-        header('Content-Disposition: attachment; filename=' . $filename . '.sql');
+
+    if (($dumpfile = emZip($filename . '.sql', $dumpfile)) === false) {
+        emDirect('./data.php?error_f=1');
     }
-    if (preg_match("/MSIE ([0-9].[0-9]{1,2})/", $_SERVER['HTTP_USER_AGENT'])) {
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Pragma: public');
-    } else {
-        header('Pragma: no-cache');
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+
+    // Clear output buffer to prevent any accidental output
+    if (ob_get_length()) {
+        ob_end_clean();
     }
+
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename=' . $filename . '.zip');
+    header('Pragma: no-cache');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
     header('Expires: ' . gmdate('D, d M Y H:i:s') . ' GMT');
     echo $dumpfile;
+    exit;
 }
 
 if ($action === 'import') {
@@ -97,67 +93,9 @@ if ($action === 'import') {
         emMsg(lang('import_only_emlog'));
     }
     checkSqlFileInfo($sqlfile['tmp_name']);
-    bakindata($sqlfile['tmp_name']);
+    importData($sqlfile['tmp_name']);
     $CACHE->updateCache();
     emDirect('./data.php?active_import=1');
-}
-
-function checkSqlFileInfo($sqlfile) {
-    $fp = @fopen($sqlfile, 'r');
-    if (!$fp) {
-        emMsg(lang('import_failed_not_read'));
-    }
-    $dumpinfo = [];
-    $line = 0;
-    while (!feof($fp)) {
-        $a = fgets($fp, 4096);
-        if (empty(trim($a, "\t\n\r\0\x0B"))) {
-            continue;
-        }
-        $dumpinfo[] = $a;
-        $line++;
-        if ($line == 3) {
-            break;
-        }
-    }
-    fclose($fp);
-    if (empty($dumpinfo)) {
-        emMsg(lang('import_failed_not_emlog'));
-    }
-    if (!strstr($dumpinfo[0], '#version:emlog ' . Option::EMLOG_VERSION)) {
-        emMsg(lang('import_failed_not_emlog_ver') . Option::EMLOG_VERSION);
-    }
-    if (preg_match('/#tableprefix:' . DB_PREFIX . '/', $dumpinfo[2]) === 0) {
-        emMsg(lang('import_failed_bad_prefix') . $dumpinfo[2]);
-    }
-}
-
-/**
- * Execute SQL statement of backup file
- */
-function bakindata($filename) {
-    $DB = Database::getInstance();
-    $setchar = $DB->getMysqlVersion() > '5.5' ? "ALTER DATABASE `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" : '';
-    $sql = file($filename);
-    if (isset($sql[0]) && !empty($sql[0]) && checkBOM($sql[0])) {
-        $sql[0] = substr($sql[0], 3);
-    }
-    array_unshift($sql, $setchar);
-    $query = '';
-    foreach ($sql as $value) {
-        $value = trim($value);
-        if (!$value || $value[0] === '#') {
-            continue;
-        }
-        $query .= $value;
-        if (preg_match("/\;$/i", $value)) {
-            if (preg_match("/^CREATE/i", $query)) {
-                $query = preg_replace("/\DEFAULT CHARSET=([a-z0-9]+)/is", '', $query);
-            }
-            $DB->query($query);
-            $query = '';
-        }
-    }
 }
 
 /**
@@ -166,7 +104,8 @@ function bakindata($filename) {
  * @param string $table table name
  * @return string
  */
-function dataBak($table) {
+function exportData($table)
+{
     $DB = Database::getInstance();
     $sql = "DROP TABLE IF EXISTS $table;\n";
     $createtable = $DB->query("SHOW CREATE TABLE $table");
@@ -195,10 +134,78 @@ function dataBak($table) {
     return $sql;
 }
 
+function checkSqlFileInfo($sqlfile)
+{
+    $fp = @fopen($sqlfile, 'r');
+    if (!$fp) {
+        emMsg(lang('failed_to_read_backup_file'));
+    }
+    $dumpinfo = [];
+    $line = 0;
+    while (!feof($fp)) {
+        $a = fgets($fp, 4096);
+        if (empty(trim($a, "\t\n\r\0\x0B"))) {
+            continue;
+        }
+        $dumpinfo[] = $a;
+        $line++;
+        if ($line == 3) {
+            break;
+        }
+    }
+    fclose($fp);
+    if (empty($dumpinfo)) {
+        emMsg(lang('not_emlog_data_file'));
+    }
+
+    if (preg_match("/pro\s\d+\.\d+\.\d+/", $dumpinfo[0], $matches)) {
+        $v = $matches[0];
+        if ($v !== Option::EMLOG_VERSION) {
+            emMsg(lang('not_the_current_version') . ' emlog ' . $v);
+        }
+    } else {
+        emMsg(lang('not_emlog_data_file'));
+    }
+
+    if (preg_match('/#tableprefix:' . DB_PREFIX . '/', $dumpinfo[2]) === 0) {
+        emMsg(lang('backup_file_bad_prefix') . $dumpinfo[2]);
+    }
+}
+
+/**
+ * Execute SQL statement of backup file
+ */
+function importData($filename)
+{
+    $DB = Database::getInstance();
+    $setchar = $DB->getVersion() > '5.5' ? "ALTER DATABASE `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" : '';
+    $sql = file($filename);
+    if (isset($sql[0]) && !empty($sql[0]) && checkBOM($sql[0])) {
+        $sql[0] = substr($sql[0], 3);
+    }
+    array_unshift($sql, $setchar);
+    $query = '';
+    foreach ($sql as $value) {
+        $value = trim($value);
+        if (!$value || $value[0] === '#') {
+            continue;
+        }
+        $query .= $value;
+        if (preg_match("/\;$/i", $value)) {
+            if (preg_match("/^CREATE/i", $query)) {
+                $query = preg_replace("/\DEFAULT CHARSET=([a-z0-9]+)/is", '', $query);
+            }
+            $DB->query($query);
+            $query = '';
+        }
+    }
+}
+
 /**
  * check BOM (byte order mark)
  */
-function checkBOM($contents) {
+function checkBOM($contents)
+{
     $charset[1] = substr($contents, 0, 1);
     $charset[2] = substr($contents, 1, 1);
     $charset[3] = substr($contents, 2, 1);

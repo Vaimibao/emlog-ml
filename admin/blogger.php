@@ -1,9 +1,10 @@
 <?php
+
 /**
  * user profile
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -18,56 +19,84 @@ if (empty($action)) {
     $row = $User_Model->getOneUser(UID);
     extract($row);
 
-    $icon = $photo ?: "./views/images/avatar.svg";
+    $icon = User::getAvatar($photo);
 
-    include View::getAdmView('header');
+    include View::getAdmView(User::haveEditPermission() ? 'header' : 'uc_header');
     require_once(View::getAdmView('blogger'));
-    include View::getAdmView('footer');
+    include View::getAdmView(User::haveEditPermission() ? 'footer' : 'uc_footer');
     View::output();
 }
 
 if ($action == 'update') {
     LoginAuth::checkToken();
     $User_Model = new User_Model();
-    $nickname = isset($_POST['name']) ? addslashes(trim($_POST['name'])) : '';
-    $email = isset($_POST['email']) ? addslashes(trim($_POST['email'])) : '';
-    $description = isset($_POST['description']) ? addslashes(trim($_POST['description'])) : '';
-    $login = isset($_POST['username']) ? addslashes(trim($_POST['username'])) : '';
-    $newpass = isset($_POST['newpass']) ? addslashes(trim($_POST['newpass'])) : '';
-    $repeatpass = isset($_POST['repeatpass']) ? addslashes(trim($_POST['repeatpass'])) : '';
+    $nickname = Input::postStrVar('name');
+    $description = Input::postStrVar('description');
+    $username = Input::postStrVar('username');
 
     if (empty($nickname)) {
-        emDirect("./blogger.php?error_a=1");
-    } elseif (!checkMail($email)) {
-        emDirect("./blogger.php?error_email=1");
-    } elseif (strlen($newpass) > 0 && strlen($newpass) < 6) {
-        emDirect("./blogger.php?error_c=1");
-    } elseif (!empty($newpass) && $newpass != $repeatpass) {
-        emDirect("./blogger.php?error_d=1");
-    } elseif ($User_Model->isUserExist($login, UID)) {
-        emDirect("./blogger.php?error_e=1");
+        Output::error(lang('nickname_empty'));
     } elseif ($User_Model->isNicknameExist($nickname, UID)) {
-        emDirect("./blogger.php?error_f=1");
-    } elseif ($User_Model->isMailExist($email, UID)) {
-        emDirect("./blogger.php?error_g=1");
+        Output::error(lang('nickname_exists'));
+    } elseif ($User_Model->isUserExist($username, UID)) {
+        Output::error(lang('username_exists'));
     }
 
     $d = [
         'nickname'    => $nickname,
         'description' => $description,
-        'email'       => $email,
-        'username'    => $login,
+        'username'    => $username,
     ];
-
-    if (!empty($newpass)) {
-        $PHPASS = new PasswordHash(8, true);
-        $newpass = $PHPASS->HashPassword($newpass);
-        $d['password'] = $newpass;
-    }
 
     $User_Model->updateUser($d, UID);
     $CACHE->updateCache('user');
-    emDirect("./blogger.php?active_edit=1");
+    Output::ok();
+}
+
+if ($action === 'change_password') {
+    LoginAuth::checkToken();
+    $User_Model = new User_Model();
+    $new_passwd = Input::postStrVar('new_passwd');
+    $new_passwd2 = Input::postStrVar('new_passwd2');
+
+    if (strlen($new_passwd) < 6) {
+        Output::error(lang('password_short'));
+    } elseif ($new_passwd !== $new_passwd2) {
+        Output::error(lang('password_not_equal'));
+    }
+
+    $PHPASS = new PasswordHash(8, true);
+    $new_passwd = $PHPASS->HashPassword($new_passwd);
+    $d['password'] = $new_passwd;
+
+    $User_Model->updateUser($d, UID);
+    $CACHE->updateCache('user');
+    Output::ok();
+}
+
+if ($action === 'change_email') {
+    LoginAuth::checkToken();
+    $User_Model = new User_Model();
+    $email = Input::postStrVar('email');
+    $mail_code = Input::postStrVar('mail_code');
+
+    if (!checkMail($email)) {
+        Output::error(lang('email_enter_please'));
+    } elseif ($User_Model->isMailExist($email, UID)) {
+        Output::error(lang('email_is_used'));
+    }
+
+    if (!User::checkMailCode($mail_code)) {
+        Output::error(lang('mail_code_invalid'));
+    }
+
+    $d = [
+        'email' => $email,
+    ];
+
+    $User_Model->updateUser($d, UID);
+    $CACHE->updateCache('user');
+    Output::ok();
 }
 
 if ($action == 'update_avatar') {
@@ -77,5 +106,5 @@ if ($action == 'update_avatar') {
     $User_Model = new User_Model();
     $User_Model->updateUser(array('photo' => $file_path), UID);
     $CACHE->updateCache('user');
-    echo $file_path;
+    Output::ok($file_path);
 }

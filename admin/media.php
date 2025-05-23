@@ -1,8 +1,9 @@
 <?php
+
 /**
  * media
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -21,22 +22,39 @@ if (empty($action)) {
     $sid = Input::getIntVar('sid');
     $page = Input::getIntVar('page', 1);
     $date = Input::getStrVar('date');
-    $uid = User::haveEditPermission() ? null : UID;
+    $uid = Input::getIntVar('uid');
+    $keyword = Input::getStrVar('keyword');
+    $show = Input::getStrVar('show');
+
+    if (!User::haveEditPermission()) {
+        $uid = UID;
+    }
+
+    if ($show === 'list' || $show === 'grid') {
+        Option::updateOption('media_show_model', $show);
+        $CACHE->updateCache('options');
+    }
+    $show = Option::get('media_show_model');
+    if ($show !== 'list' && $show !== 'grid') {
+        $show = 'grid';
+    }
 
     $page_count = 24;
     $page_url = 'media.php?';
     $page_url .= $sid ? "sid=$sid&" : '';
     $page_url .= $date ? "date=$date&" : '';
-    $dateTime = $date . ' 23:59:59';
-    $medias = $Media_Model->getMedias($page, $page_count, $uid, $sid, $dateTime);
-    $count = $Media_Model->getMediaCount($uid, $sid, $dateTime);
+    $page_url .= $uid ? "uid=$uid&" : '';
+    $page_url .= $keyword ? "keyword=$keyword&" : '';
+    $dateTime = $date ? $date . ' 23:59:59' : '';
+    $medias = $Media_Model->getMedias($page, $page_count, $uid, $sid, strtotime($dateTime), $keyword);
+    $count = $Media_Model->getMediaCount($uid, $sid, strtotime($dateTime), $keyword);
     $page = pagination($count, $page_count, $page, $page_url . 'page=');
 
     $sorts = $MediaSortModel->getSorts();
 
-    include View::getAdmView('header');
+    include View::getAdmView(User::haveEditPermission() ? 'header' : 'uc_header');
     require_once(View::getAdmView('media'));
-    include View::getAdmView('footer');
+    include View::getAdmView(User::haveEditPermission() ? 'footer' : 'uc_footer');
     View::output();
 }
 
@@ -51,23 +69,27 @@ if ($action === 'lib') {
 
     $ret['hasMore'] = !(count($medias) < $perPageCount);
     foreach ($medias as $v) {
+        $data['media_id'] = $v['aid'];
+        $data['media_alias'] = $v['alias'];
         $data['media_path'] = $v['filepath'];
         $data['media_url'] = rmUrlParams(getFileUrl($v['filepath']));
-        $data['media_name'] = $v['filename'];
+        $data['media_down_url'] = BLOG_URL . '?resource_alias=' . $v['alias'];
+        $data['media_name'] = subString($v['filename'], 0, 20);
         $data['attsize'] = $v['attsize'];
         $data['media_type'] = '';
-        $data['media_icon'] = "./views/images/fnone.png";
+        $data['media_icon'] = "./views/images/fnone.webp";
         if (isImage($v['mimetype'])) {
             $data['media_icon'] = getFileUrl($v['filepath_thum']);
             $data['media_type'] = 'image';
         } elseif (isZip($v['filename'])) {
-            $data['media_icon'] = "./views/images/zip.jpg";
-        } elseif (isVideo($v['filename'])) {
+            $data['media_icon'] = "./views/images/zip.webp";
+            $data['media_type'] = 'zip';
+        } elseif (isVideo($v['mimetype'])) {
             $data['media_type'] = 'video';
-            $data['media_icon'] = "./views/images/video.png";
+            $data['media_icon'] = "./views/images/video.webp";
         } elseif (isAudio($v['filename'])) {
             $data['media_type'] = 'audio';
-            $data['media_icon'] = "./views/images/audio.png";
+            $data['media_icon'] = "./views/images/audio.webp";
         }
         $ret['images'][] = $data;
     }
@@ -82,25 +104,13 @@ if ($action === 'upload') {
         $attach = isset($_FILES['editormd-image-file']) ? $_FILES['editormd-image-file'] : '';
     }
 
-    // Registered users are limited in the number of posts (including drafts) within 24 hours. When it is 0, it is forbidden to post notes and upload graphic resources
-    if (!User::haveEditPermission() && Option::get('posts_per_day') <= 0) {
-        $ret['message'] = lang('upload_restricted');
-        if ($editor) {
-            exit(json_encode($ret));
-        } else {
-            header("HTTP/1.0 400 Bad Request");
-            exit($ret['message']);
-        }
+    if (!User::haveEditPermission() && Option::get('forbid_user_upload') === 'y') {
+        Media::uploadRespond(['message' => lang('upload_restricted')], $editor);
     }
 
-    if (!$attach || $attach['error'] === 4) {
-        if ($editor) {
-            echo json_encode(['success' => 0, 'message' => 'upload error']);
-        } else {
-            header("HTTP/1.0 400 Bad Request");
-            echo "upload error";
-        }
-        exit;
+    $uploadCheckResult = Media::checkUpload($attach);
+    if ($uploadCheckResult !== true) {
+        Media::uploadRespond(['message' => $uploadCheckResult], $editor);
     }
 
     $ret = '';
@@ -109,34 +119,30 @@ if ($action === 'upload') {
     doOnceAction('upload_media', $attach, $ret);
 
     if (empty($ret['success'])) {
-        if ($editor) {
-            echo json_encode($ret);
-        } else {
-            header("HTTP/1.0 400 Bad Request");
-            echo $ret['message'];
-        }
-        exit;
+        Media::uploadRespond($ret, $editor);
     }
 
     $aid = $Media_Model->addMedia($ret['file_info'], $sid);
-    if ($editor) {
-        echo json_encode($ret);
-    } else {
-        echo 'success';
-    }
+    Media::uploadRespond($ret, $editor, true);
 }
 
 if ($action === 'delete') {
     LoginAuth::checkToken();
     $aid = Input::getIntVar('aid');
     $Media_Model->deleteMedia($aid);
-    emDirect("media.php?active_del=1");
+    emDirect("media.php");
+}
+
+if ($action === 'delete_async') {
+    $aid = Input::postIntVar('aid');
+    $Media_Model->deleteMedia($aid);
+    output::ok();
 }
 
 if ($action === 'operate_media') {
     $operate = Input::postStrVar('operate');
     $sort = Input::postIntVar('sort');
-    $aids = isset($_POST['aids']) ? array_map('intval', $_POST['aids']) : array();
+    $aids = Input::postIntArray('aids', []);
 
     LoginAuth::checkToken();
     switch ($operate) {
@@ -144,7 +150,7 @@ if ($action === 'operate_media') {
             foreach ($aids as $value) {
                 $Media_Model->deleteMedia($value);
             }
-            emDirect("media.php?active_del=1");
+            emDirect("media.php");
             break;
         case 'move':
             foreach ($aids as $id) {
@@ -153,6 +159,18 @@ if ($action === 'operate_media') {
             emDirect("media.php?active_mov=1");
             break;
     }
+}
+
+if ($action === 'update_media') {
+    $filename = Input::postStrVar('filename');
+    $id = Input::postIntVar('id');
+
+    if (empty($filename)) {
+        emDirect("./media.php?error_a=1");
+    }
+
+    $Media_Model->updateMedia(["filename" => $filename], $id);
+    emDirect("./media.php?active_edit=1");
 }
 
 if ($action === 'add_media_sort') {
@@ -173,7 +191,7 @@ if ($action === 'update_media_sort') {
         emMsg(lang('no_permission'), './');
     }
     $sortname = Input::postStrVar('sortname');
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : '';
+    $id = Input::postIntVar('id');
 
     if (empty($sortname)) {
         emDirect("./media.php?error_a=1");
@@ -192,5 +210,5 @@ if ($action === 'del_media_sort') {
     LoginAuth::checkToken();
 
     $MediaSortModel->deleteSort($id);
-    emDirect("./media.php?active_del=1");
+    emDirect("./media.php");
 }

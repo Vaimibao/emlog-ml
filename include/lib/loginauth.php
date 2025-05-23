@@ -1,17 +1,20 @@
 <?php
+
 /**
  * Login authentication
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class LoginAuth {
+class LoginAuth
+{
 
-    const LOGIN_ERROR_USER = -1;     //User does not exist
-    const LOGIN_ERROR_PASSWD = -2;   //Wrong password
+    const LOGIN_ERROR_USER = -1;
+    const LOGIN_ERROR_PASSWD = -2;
+    const LOGIN_ERROR_FORBID = -3;
 
-
-    public static function isLogin() {
+    public static function isLogin()
+    {
         global $userData;
 
         if (isset($_COOKIE[AUTH_COOKIE_NAME])) {
@@ -29,25 +32,28 @@ class LoginAuth {
         return true;
     }
 
-    public static function checkLogin($error_code = NULL) {
+    public static function checkLogin($error_code = NULL)
+    {
         if (self::isLogin() === true) {
             return;
         }
         if ($error_code) {
-            emDirect("./account.php?action=signin&code=$error_code");
+            emDirect(BLOG_URL . "admin/account.php?action=signin&code=$error_code");
         } else {
-            emDirect("./account.php?action=signin");
+            emDirect(BLOG_URL . "admin/account.php?action=signin");
         }
     }
 
-    public static function checkLogged() {
+    public static function checkLogged()
+    {
         if (self::isLogin() === false) {
             return;
         }
         emDirect("./");
     }
 
-    public static function checkUser($username, $password) {
+    public static function checkUser($username, $password)
+    {
         if (empty($username) || empty($password)) {
             return self::LOGIN_ERROR_USER;
         }
@@ -56,39 +62,24 @@ class LoginAuth {
             return self::LOGIN_ERROR_USER;
         }
         $hash = $userData['password'];
+        $state = $userData['state'];
+        if ($state === User::USER_STATE_FORBID) {
+            return self::LOGIN_ERROR_FORBID;
+        }
         if (true === self::checkPassword($password, $hash)) {
             return $userData['uid'];
         }
         return self::LOGIN_ERROR_PASSWD;
     }
 
-    public static function getUserDataByLogin($account) {
-        $DB = Database::getInstance();
-        if (empty($account)) {
-            return false;
-        }
-        $ret = $DB->once_fetch_array("SELECT * FROM " . DB_PREFIX . "user WHERE username = '$account' AND state = 0");
-        if (!$ret) {
-            $ret = $DB->once_fetch_array("SELECT * FROM " . DB_PREFIX . "user WHERE email = '$account'  AND state = 0");
-            if (!$ret) {
-                return false;
-            }
-        }
-        $userData['nickname'] = htmlspecialchars($ret['nickname']);
-        $userData['username'] = htmlspecialchars($ret['username']);
-        $userData['password'] = $ret['password'];
-        $userData['uid'] = $ret['uid'];
-        $userData['role'] = $ret['role'];
-        $userData['photo'] = $ret['photo'];
-        $userData['email'] = $ret['email'];
-        $userData['description'] = $ret['description'];
-        $userData['ip'] = $ret['ip'];
-        $userData['create_time'] = $ret['create_time'];
-        $userData['update_time'] = $ret['update_time'];
-        return $userData;
+    public static function getUserDataByLogin($account)
+    {
+        $User_Model = new User_Model();
+        return $User_Model->getUserDataByLogin($account);
     }
 
-    public static function checkPassword($password, $hash) {
+    public static function checkPassword($password, $hash)
+    {
         global $em_hasher;
         if (empty($em_hasher)) {
             $em_hasher = new PasswordHash(8, true);
@@ -96,7 +87,8 @@ class LoginAuth {
         return $em_hasher->CheckPassword($password, $hash);
     }
 
-    public static function setAuthCookie($user_login, $persist = false) {
+    public static function setAuthCookie($user_login, $persist = false)
+    {
         if ($persist) {
             $expiration = time() + 3600 * 24 * 30 * 12;
         } else {
@@ -107,18 +99,21 @@ class LoginAuth {
         setcookie($auth_cookie_name, $auth_cookie, $expiration, '/', '', false, true);
     }
 
-    private static function generateAuthCookie($user_login, $expiration) {
+    private static function generateAuthCookie($user_login, $expiration)
+    {
         $key = self::emHash($user_login . '|' . $expiration);
         $hash = hash_hmac('md5', $user_login . '|' . $expiration, $key);
 
         return $user_login . '|' . $expiration . '|' . $hash;
     }
 
-    private static function emHash($data) {
+    private static function emHash($data)
+    {
         return hash_hmac('md5', $data, AUTH_KEY);
     }
 
-    public static function validateAuthCookie($cookie = '') {
+    public static function validateAuthCookie($cookie = '')
+    {
         if (empty($cookie)) {
             return false;
         }
@@ -141,14 +136,19 @@ class LoginAuth {
             return false;
         }
 
-        $user = self::getUserDataByLogin($username);
-        if (!$user) {
+        $userData = self::getUserDataByLogin($username);
+        if (!$userData) {
             return false;
         }
-        return $user;
+        $state = isset($userData['state']) ? $userData['state'] : 0;
+        if ($state !== User::USER_STATE_NORMAL) {
+            return false;
+        }
+        return $userData;
     }
 
-    public static function genToken() {
+    public static function genToken()
+    {
         if (!isset($_SESSION)) {
             session_start();
         }
@@ -160,7 +160,8 @@ class LoginAuth {
         return $token;
     }
 
-    public static function getToken() {
+    public static function getToken()
+    {
         if (!isset($_SESSION)) {
             session_start();
         }
@@ -171,7 +172,8 @@ class LoginAuth {
         return $token;
     }
 
-    public static function checkToken() {
+    public static function checkToken()
+    {
         $token = isset($_REQUEST['token']) ? addslashes($_REQUEST['token']) : '';
         $sessionToken = self::getToken();
         // The session is abnormal, the /tmp directory may not be writable, skip the check
@@ -179,7 +181,7 @@ class LoginAuth {
             return;
         }
         if ($token !== $sessionToken) {
-            emMsg(lang('no_permission'));
+            emMsg(lang('token_error'));
         }
     }
 }

@@ -1,9 +1,10 @@
 <?php
+
 /**
  * comments
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -16,23 +17,45 @@ require_once 'globals.php';
 $Comment_Model = new Comment_Model();
 
 if (!$action) {
-    $blogId = isset($_GET['gid']) ? (int)$_GET['gid'] : null;
-    $hide = isset($_GET['hide']) ? addslashes($_GET['hide']) : '';
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $blogId = Input::getIntVar('gid');
+    $uid = Input::getIntVar('uid');
+    $hide = Input::getStrVar('hide');
+    $page = Input::getIntVar('page', 1);
+    $perpage_num = Input::getIntVar('perpage_num');
 
+    $addUrl_0 = $uid ? "uid=$uid&" : '';
     $addUrl_1 = $blogId ? "gid=$blogId&" : '';
     $addUrl_2 = $hide ? "hide=$hide&" : '';
-    $addUrl = $addUrl_1 . $addUrl_2;
+    $addUrl = $addUrl_0 . $addUrl_1 . $addUrl_2;
 
-    $comment = $Comment_Model->getCommentsForAdmin($blogId, $hide, $page);
-    $cmnum = $Comment_Model->getCommentNum($blogId, $hide);
-    $hideCommNum = $Comment_Model->getCommentNum($blogId, 'y');
-    $pageurl = pagination($cmnum, Option::get('admin_perpage_num'), $page, "comment.php?{$addUrl}page=");
+    if ($perpage_num > 0) {
+        $perPage = $perpage_num;
+        Option::updateOption('admin_comment_perpage_num', $perpage_num);
+        $CACHE->updateCache('options');
+    } else {
+        $admin_comment_perpage_num = Option::get('admin_comment_perpage_num');
+        $perPage = $admin_comment_perpage_num ? $admin_comment_perpage_num : 20;
+    }
 
-    include View::getAdmView('header');
+    $comment = $Comment_Model->getCommentsForAdmin($blogId, $uid, $hide, $page, $perPage);
+    $cmnum = $Comment_Model->getCommentNum($blogId, $uid, $hide);
+    $hideCommNum = $Comment_Model->getCommentNum($blogId, $uid, 'y');
+    $pageurl = pagination($cmnum, $perPage, $page, "comment.php?{$addUrl}page=");
+
+    include View::getAdmView(User::haveEditPermission() ? 'header' : 'uc_header');
     require_once(View::getAdmView('comment'));
-    include View::getAdmView('footer');
+    include View::getAdmView(User::haveEditPermission() ? 'footer' : 'uc_footer');
     View::output();
+}
+
+if ($action === 'del') {
+    $id = Input::getIntVar('id');
+
+    LoginAuth::checkToken();
+
+    $Comment_Model->delComment($id);
+    $CACHE->updateCache(array('sta', 'comment'));
+    emDirect("./comment.php");
 }
 
 if ($action === 'delbyip') {
@@ -40,25 +63,38 @@ if ($action === 'delbyip') {
     if (!User::haveEditPermission()) {
         emMsg(lang('no_permission'), './');
     }
-    $ip = $_GET['ip'] ? addslashes($_GET['ip']) : '';
+    $ip = Input::getStrVar('ip');
     $Comment_Model->delCommentByIp($ip);
     $CACHE->updateCache(array('sta', 'comment'));
-    emDirect("./comment.php?active_del=1");
+    emDirect("./comment.php");
+}
+
+if ($action === 'pub') {
+    LoginAuth::checkToken();
+    if (!User::haveEditPermission()) {
+        emMsg(lang('no_permission'), './');
+    }
+
+    $id = Input::getIntVar('id');
+
+    $Comment_Model->showComment($id);
+    $CACHE->updateCache(array('sta', 'comment'));
+    emDirect("./comment.php?active_show=1");
 }
 
 if ($action === 'batch_operation') {
-    $operate = isset($_POST['operate']) ? $_POST['operate'] : '';
-    $comments = isset($_POST['com']) ? array_map('intval', $_POST['com']) : [];
+    $operate = Input::postStrVar('operate');
+    $comments = Input::postIntArray('com', []);
 
     if (empty($comments)) {
         emDirect("./comment.php?error_a=1");
     }
 
     switch ($operate) {
-        case 'del' :
+        case 'del':
             $Comment_Model->batchComment('delcom', $comments);
             $CACHE->updateCache(array('sta', 'comment'));
-            emDirect("./comment.php?active_del=1");
+            emDirect("./comment.php");
             break;
         case 'hide':
             $Comment_Model->batchComment('hidecom', $comments);
@@ -84,10 +120,9 @@ if ($action === 'batch_operation') {
 }
 
 if ($action === 'doreply') {
-    $reply = isset($_POST['reply']) ? trim(addslashes($_POST['reply'])) : '';
-    $commentId = isset($_POST['cid']) ? (int)$_POST['cid'] : '';
-    $blogId = isset($_POST['gid']) ? (int)$_POST['gid'] : '';
-    $hide = isset($_POST['hide']) ? addslashes($_POST['hide']) : 'n';
+    $reply = Input::postStrVar('reply');
+    $commentId = Input::postIntVar('cid');
+    $hide = Input::postStrVar('hide', 'n');
 
     if (empty($reply)) {
         emDirect("./comment.php?error_c=1");
@@ -99,7 +134,11 @@ if ($action === 'doreply') {
         $hide = 'n';
     }
 
-    $Comment_Model->replyComment($blogId, $commentId, $reply, $hide);
+    $comment = $Comment_Model->getOneComment($commentId);
+    $blogId = isset($comment['gid']) ? (int)$comment['gid'] : null;
+    $content = '@' . addslashes($comment['poster']) . '：' . $reply;
+
+    $Comment_Model->replyComment($blogId, $commentId, $content, $hide);
     notice::sendNewCommentMail($reply, $blogId, $commentId);
 
     $CACHE->updateCache('comment');

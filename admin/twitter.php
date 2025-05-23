@@ -1,8 +1,9 @@
 <?php
+
 /**
  * notes
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -21,11 +22,8 @@ if (empty($action)) {
     $all = Input::getStrVar('all');
 
     $uid = $all === 'y' && user::isAdmin() ? '' : UID;
-    $tws = $Twitter_Model->getTwitters($uid, $page, TW_PAGE_COUNT);
+    $tws = $Twitter_Model->getTwitters($uid, $page, TW_PAGE_COUNT, true);
     $twnum = $Twitter_Model->getCount($uid);
-
-    $parsedown = new Parsedown();
-    $parsedown->setBreaksEnabled(true); //automatic line wrapping
 
     $subPage = '';
     foreach ($_GET as $key => $val) {
@@ -33,32 +31,30 @@ if (empty($action)) {
     }
     $pageurl = pagination($twnum, TW_PAGE_COUNT, $page, "twitter.php?{$subPage}&page=");
 
-    include View::getAdmView('header');
-    require_once View::getAdmView('twitter');
-    include View::getAdmView('footer');
+    include View::getAdmView(User::haveEditPermission() ? 'header' : 'uc_header');
+    require_once(View::getAdmView('twitter'));
+    include View::getAdmView(User::haveEditPermission() ? 'footer' : 'uc_footer');
     View::output();
 }
 
 if ($action == 'post') {
     $t = Input::postStrVar('t');
+    $private = Input::postStrVar('private', 'n');
 
     if (!$t) {
         emDirect("twitter.php?error_a=1");
     }
 
-    // Registered users are limited in the number of posts (including drafts) within 24 hours, when it is 0, it is forbidden to post notes and upload graphic resources
-    if (!User::haveEditPermission() && Option::get('posts_per_day') <= 0) {
-        emDirect("twitter.php?error_forbid=1");
-    }
-
     $data = [
         'content' => $t,
+        'private' => $private,
         'author'  => UID,
         'date'    => time(),
     ];
 
-    $Twitter_Model->addTwitter($data);
+    $id = $Twitter_Model->addTwitter($data);
     $CACHE->updateCache('sta');
+    doAction('post_note', $data, $id);
     emDirect("twitter.php?active_t=1");
 }
 
@@ -84,5 +80,5 @@ if ($action == 'del') {
     $id = Input::getIntVar('id');
     $Twitter_Model->delTwitter($id);
     $CACHE->updateCache('sta');
-    emDirect("twitter.php?active_del=1");
+    emDirect("twitter.php");
 }

@@ -1,8 +1,9 @@
 <?php
+
 /**
  * tags
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -31,13 +32,16 @@ if (empty($action)) {
 
 if ($action == 'update_tag') {
     $tagName = Input::postStrVar('tagname');
+    $title = Input::postStrVar('title');
+    $kw = Input::postStrVar('kw');
+    $description = Input::postStrVar('description');
     $tagId = Input::postIntVar('tid');
 
     if (empty($tagName)) {
         emDirect("tag.php?error_a=1");
     }
 
-    $Tag_Model->updateTagName($tagId, $tagName);
+    $Tag_Model->updateTagName($tagId, $tagName, $kw, $title, $description);
     $CACHE->updateCache('tags');
     emDirect("./tag.php?active_edit=1");
 }
@@ -51,12 +55,12 @@ if ($action == 'del_tag') {
     }
     $Tag_Model->deleteTag($tid);
     $CACHE->updateCache('tags');
-    emDirect("./tag.php?active_del=1");
+    emDirect("./tag.php");
 }
 
 if ($action === 'operate_tag') {
     $operate = Input::postStrVar('operate');
-    $tids = isset($_POST['tids']) ? array_map('intval', $_POST['tids']) : [];
+    $tids = Input::postIntArray('tids', []);
 
     LoginAuth::checkToken();
     if ($operate === 'del') {
@@ -64,6 +68,6 @@ if ($action === 'operate_tag') {
             $Tag_Model->deleteTag($value);
         }
         $CACHE->updateCache('tags');
-        emDirect("./tag.php?active_del=1");
+        emDirect("./tag.php");
     }
 }

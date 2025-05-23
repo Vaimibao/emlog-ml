@@ -1,5 +1,5 @@
 <?php
-!defined('EMLOG_ROOT') && exit('access deined!');
+defined('EMLOG_ROOT') || exit('access denied!');
 
 // Execute this function when the plugin is started
 function callback_init() {
@@ -8,7 +8,8 @@ function callback_init() {
 
 // Execute this function when the plugin is removed
 function callback_rm() {
-    // do something
+    $plugin_storage = Storage::getInstance('tips');
+    $plugin_storage->deleteAllName('YES'); // Clean up plugin settings data when the plugin is removed
 }
 
 // Execute this function when the plugin is updated

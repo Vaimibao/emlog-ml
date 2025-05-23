@@ -1,10 +1,8 @@
-<?php if (!defined('EMLOG_ROOT')) {
-    exit('error!');
-} ?>
+<?php defined('EMLOG_ROOT') || exit('access denied!'); ?>
 <?php if (isset($_GET['error_nickname'])): ?>
     <div class="alert alert-danger"><?= lang('nickname_is_empty') ?></div><?php endif ?>
 <?php if (isset($_GET['error_email'])): ?>
-    <div class="alert alert-danger"><?= lang('email_empty') ?></div><?php endif ?>
+    <div class="alert alert-danger"><?= lang('email_user_name_empty') ?></div><?php endif ?>
 <?php if (isset($_GET['error_exist'])): ?>
     <div class="alert alert-danger"><?= lang('user_name_exists') ?></div><?php endif ?>
 <?php if (isset($_GET['error_exist_email'])): ?>
@@ -13,8 +11,8 @@
     <div class="alert alert-danger"><?= lang('password_length_short') ?></div><?php endif ?>
 <?php if (isset($_GET['error_pwd2'])): ?>
     <div class="alert alert-danger"><?= lang('passwords_not_equal') ?></div><?php endif ?>
-<h1 class="h3 mb-4 text-gray-800"><?= lang('user_manage') ?></h1>
-<div class="card shadow mb-4 mt-4">
+<h1 class="h4 pt-3 mb-4 text-gray-800"><?= lang('user_manage') ?></h1>
+<div class="card mb-4 mt-4">
     <div class="card-body">
         <form action="user.php?action=update" method="post">
             <div class="form-group">
@@ -23,7 +21,7 @@
             </div>
             <div class="form-group">
                 <label for="email"><?= lang('email') ?></label>
-                <input type="email" class="form-control" value="<?= $email ?>" name="email" id="email" required>
+                <input type="email" class="form-control" value="<?= $email ?>" name="email" id="email">
             </div>
             <div class="form-group">
                 <label for="role"><?= lang('user_role') ?></label>
@@ -34,11 +32,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="description"><?= lang('personal_description') ?></label>>
+                <label for="description"><?= lang('personal_description') ?></label>
                 <textarea name="description" type="text" class="form-control"><?= $description ?></textarea>
             </div>
             <div class="form-group">
-                <label for="username"><?= lang('user_name') ?></label>
+                <label for="username"><?= lang('user_name_edit') ?></label>
                 <input class="form-control" value="<?= $username ?>" name="username" id="username">
             </div>
             <div class="form-group">
@@ -59,13 +57,6 @@
 <script>
     $(function () {
         setTimeout(hideActived, 3600);
-        $("#menu_category_sys").addClass('active');
-        $("#menu_sys").addClass('show');
         $("#menu_user").addClass('active');
-
-        if ($("#role").val() == 'admin') $("#ischeck").hide();
-        $("#role").change(function () {
-            $("#ischeck").toggle()
-        })
     });
 </script>

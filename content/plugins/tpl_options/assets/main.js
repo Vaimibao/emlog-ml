@@ -6,7 +6,6 @@ $(function () {
     var optionArea = $('<div/>').insertAfter($('#content').find('.container-fluid .row')).addClass(attr('area')).slideUp();
     var loadingDom = $('<div />').appendTo(body);
     var message = $('<span />').appendTo($('#wrapper'));
-/*vot*/    var goTopbtn = $('<span />').appendTo($('#wrapper')).attr({'id': 'goTopbtn', 'title': lang('back_to_top')});
     var tplBox = $('.tpl');
     var timer, input, targetInput, target, templateInput, template;
     var trueInput = $('<input type="file" name="image">').css({
@@ -21,20 +20,27 @@ $(function () {
         trueInput.css('visibility', 'hidden');
         input.css('visibility', 'visible');
     });
-    var form = $('<form id="upload-form" target="upload-image" />').append(trueInput, targetInput = $('<input type="hidden" name="target">'), templateInput = $('<input type="hidden" name="template">')).appendTo(body).attr({
+    var form = $('<form id="upload-form" target="upload-image" />').append(trueInput, targetInput = $('<input type="hidden" name="target">'), templateInput = $('<input type="hidden" name="template">')).prependTo(body).attr({
         action: tplOptions.uploadUrl, target: 'upload-image', enctype: 'multipart/form-data', method: 'post'
     });
     //Insert settings button
     for (var tpl of Object.keys(tplOptions.templates)) {
-        var now = document.querySelector('a[href*="em_confirm(\'' + tpl + '\',"]');
-        var xps = document.createElement('a');
-        xps.style.fontSize = '12px';
-        xps.style.marginLeft = '4px';
-        now.parentNode.appendChild(xps);
-/*vot*/        $('<span class="badge badge-dange">' + lang('options') + '</span>').insertBefore(xps).addClass(attr('setting')).data('template', tpl);
+        var templateCards = document.querySelectorAll('.card[data-app-alias]');
+        templateCards.forEach(function(card) {
+            if (card.getAttribute('data-app-alias') === tpl) {
+                var settingBtnContainer = card.querySelector('.setting-btn');
+                if (settingBtnContainer) {
+                    $('<a class="btn btn-outline-primary btn-sm"><i class="icofont-options"></i> ' + lang('options') + '</a>')
+                        .appendTo(settingBtnContainer)
+                        .addClass(attr('setting'))
+                        .data('template', tpl);
+                }
+            }
+        });
     }
     //Bind event handler
     body.on('click', '.' + attr('setting'), function () {
+        document.getElementsByClassName("container-fluid")[0].children[0].style.cssText = 'display:none !important';
         $('.container-fluid .row').fadeToggle();
         $.ajax({
             url: tplOptions.baseUrl, data: {
@@ -53,52 +59,180 @@ $(function () {
                 }, 1000);
             }
         });
-    }).on('click', '.tpl-options-menu ul li', function () {
+    }).on('click', '.tpl-options-menu ul li,.tpl-nav-options ul li', function () {
         $('.tpl-options-menu ul li').removeClass('active');
+        $('.tpl-nav-options ul li').removeClass('active');
         $(this).addClass('active');
     }).on('click', '.tpl-options-close', function () {
+        document.getElementsByClassName("container-fluid")[0].children[0].style.cssText = 'display:flex !important';
         $('.container-fluid .row').fadeToggle();
         optionArea.slideUp(500), tplBox.show();
-    }).on('click', '#goTopbtn', function () {
-        $('body,html').animate({scrollTop: 0}, 500);
-    }).on('click', '.option-name', function () {
-        $(this).find('.option-description').fadeToggle();
-        $(this).parent().find('.option-body').fadeToggle();
-        if ($(this).parent().find('.option-ico').hasClass('upico')) {
-            $(this).parent().find('.option-ico').removeClass('upico').addClass('downico');
-        } else {
-            $(this).parent().find('.option-ico').removeClass('downico').addClass('upico');
-        }
-
     }).on('click', '.tpl-options-menu li', function () {
         //$('html,body').animate({scrollTop:$('#'+$(this).attr('data-id')).offset().top-80}, 500);
+    }).on('click', '.vtpl-menu,.vtpl-nav.show ul li,.fixed-body', function () {
+        $('.vtpl-nav').toggleClass('show')
     }).on('click', '.tpl-options-menubtn', function () {
         $('.tpl-options-menu').fadeToggle();
-    }).on('click', '.tpl-options-btns', function () {
-        if ($(this).attr('data-type') == 1) {
-/*vot*/            $(this).text(lang('expand_all')).attr('data-type', 0);
-            $('.option-body').fadeOut();
-            $('.option-description').fadeOut();
-            $('.option-ico').removeClass('upico').addClass('downico');
-        } else {
-/*vot*/            $(this).text(lang('shrink_all')).attr('data-type', 1);
-            $('.option-body').fadeIn();
-            $('.option-description').fadeIn();
-            $('.option-ico').removeClass('downico').addClass('upico');
-        }
-    }).on('click', '.option-sort-name', function () {
+    }).on('click', '.option-sort-tag-name', function () {
         var that = $(this);
         if (that.is('.selected')) {
             return;
         }
-        var left = that.parent(), right = left.siblings('.option-sort-right');
+        var left = that.parent(), right = left.siblings('.option-sort-tag-right');
         left.find('.selected').removeClass('selected');
         that.addClass('selected');
-        right.find('.option-sort-option').removeClass('selected').eq(that.index()).addClass('selected');
-    }).on('change', '.option-sort-select', function () {
+        right.find('.option-sort-tag-option').removeClass('selected').eq(that.index()).addClass('selected');
+    }).on('change', '.option-sort-tag-select', function () {
         var that = $(this);
-        var right = that.parent().siblings('.option-sort-right');
-        right.find('.option-sort-option').removeClass('selected').eq(that.find('option:selected').index()).addClass('selected');
+        var right = that.parent().siblings('.option-sort-tag-right');
+        right.find('.option-sort-tag-option').removeClass('selected').eq(that.find('option:selected').index()).addClass('selected');
+    }).on('input propertychange paste change focus', '.chosen-search-input', function () {
+        _this_val = $(this).val().replace(/(^\s*)|(\s*$)/g, "");
+        let _this_data_opt = $(this).attr('data-opt')
+        let _drop_item = $(this).parent().parent().next()
+        let _drop_item_child = $(this).parent().parent().next().find('.chosen-results')
+        if (_this_val === '') {
+            _drop_item.css('clip', 'rect(0, 0, 0, 0)')
+            _drop_item.css('clip-path', 'inset(100% 100%)')
+            _drop_item.css('position', 'absolute')
+            return
+        }
+        _drop_item.css('clip', 'auto')
+        _drop_item.css('clip-path', 'none')
+        _drop_item.css('position', 'relative')
+        var formData = new FormData()
+        formData.append("action", 'tpl_select_search')
+        formData.append("kywd", $(this).val())
+        formData.append("name", $(this).attr('data-s-name'))
+        formData.append("type", _this_data_opt)
+        $.ajax({
+            url: $(this).attr('data-url') + 'content/plugins/tpl_options/actions/search.php',
+            type: 'post',
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                _drop_item_child.html(data)
+            },
+            error: function (data) {
+                _drop_item_child.html(data)
+            }
+        });
+    }).on('click', '.chosen-results .active-result', function () {
+        let title = $(this).html()
+        let name = $(this).attr('data-s-name')
+        let gid = $(this).attr('data-id')
+        let _search_filed = $(this).parent().parent().prev().find('.search-field')
+        let _input_item = $(this).parent().parent().prev().find('.search-field').find('.chosen-search-input')
+        let _drop_item = $(this).parent().parent()
+        _search_filed.before('<li class="search-choice"><span>' + title + '</span><a class="search-choice-close"><i class="icofont-close"></i></a><input class="d-none" name="' + name + '[]" type="text" value="' + gid + '"></li>');
+        _drop_item.css('clip', '')
+        _drop_item.css('clip-path', '')
+        _input_item.val('')
+        _input_item.focus()
+        $('form.tpl-options-form').trigger('submit');
+    }).on('click', '.search-choice-close i', function () {
+        $(this).parent().parent().remove()
+        $('form.tpl-options-form').trigger('submit');
+    }).on('click', '.tpl-block-title', function () {
+        $(this).next().toggleClass('d-none')
+        $(this).find('span').toggleClass('icofont-rounded-right')
+        $(this).find('span').toggleClass('icofont-rounded-down')
+    }).on('click', '.tpl-add-block', function () {
+        let _name = $(this).attr('data-b-name')
+        let _type = $(this).attr('data-type')
+        let _url = $(this).attr('data-url')
+        let type_html = ''
+        if (_type === 'image') {
+            type_html = '<div class="tpl-block-upload"><span>'+ lang('fill_block_title') +'</span>' +
+                '<input class="block-title-input" type="text" name="' + _name + '[title][]" value="">' +
+                '<div class="tpl-image-preview"><img src=""></div><div class="tpl-block-upload-input">' +
+                '<input type="text" name="' + _name + '[content][]" value=""><label>\n' +
+                '<a class="btn btn-primary"><i class="icofont-plus"></i>'+ lang('upload') +'</a>\n' +
+                '<input class="d-none tpl-image" type="file" name="image" data-url="' + _url + '" accept="image/svg+xml,image/webp,image/avif,image/jpeg,image/jpg,image/png,image/gif">\n' +
+                '</label>'
+            type_html += '</div></div>';
+        } else {
+            type_html += '<div>'+ lang('fill_block_title') +'</div>'
+            type_html += '<input class="block-title-input" type="text" name="' + _name + '[title][]" value="">'
+            type_html += '<div>'+ lang('fill_block_content') +'</div>'
+            if ($(this).parent().parent().hasClass('is-multi')) {
+                type_html += '<textarea rows="5" name="' + _name + '[content][]"></textarea>'
+            } else {
+                type_html += '<input type="text" name="' + _name + '[content][]" value="">'
+            }
+        }
+        $(this).before('<div class="tpl-block-item">\n' +
+            '    <div class="tpl-block-head">\n' +
+            '    <i class="tpl-block-clone icofont-ui-copy"></i>\n' +
+            '    <i class="tpl-block-remove icofont-close icofont-md"></i>\n' +
+            '    </div>\n' +
+            '    <h4 class="tpl-block-title">\n' +
+            '    <span class="tpl-block-title-icon icofont-rounded-right"></span>\n' +
+            '    <item class="block-title-text"></item>' +
+            '    </h4>\n' +
+            '    <div class="tpl-block-content d-none">\n' +
+            type_html +
+            '    </div>\n' +
+            '</div>')
+        $('form.tpl-options-form').trigger('submit');
+    }).on('change', '.tpl-image', function () {
+        let obj = this;
+        let file = $(this).prop('files')[0];
+        let _url = $(this).attr('data-url')
+        let _target_input = $(this).parent().parent().find('input[type="text"]')
+        let _target_img = $(this).parent().parent().prev().find('img')
+        let formData = new FormData();
+        if (file === undefined || file === null) return
+        formData.append("action", 'tpl_upload')
+        formData.append("image", file)
+        formData.append("origin_image", _target_input.val())
+        $.ajax({
+            url: _url + 'content/plugins/tpl_options/actions/tpl.php',
+            type: 'post',
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                let j_data = JSON.parse(data)
+                if (j_data.code === 'success') {
+                    _target_input.val(j_data.data)
+                    _target_img.attr('src', j_data.data + '?' + new Date().getTime())
+                    obj.value = ''
+                    $('form.tpl-options-form').trigger('submit');
+                } else {
+                    emlog_msg('error', j_data.data, 2500);
+                }
+            },
+            error: function (data) {
+                emlog_msg('error', lang('network_error'), 2500);
+            }
+
+        });
+
+    }).on('click', '.tpl-block-remove', function () {
+        if (confirm(lang('confirm_delete'))) {
+            $(this).parent().parent().remove()
+            $('form.tpl-options-form').trigger('submit');
+        }
+    }).on('click', '.tpl-block-clone', function () {
+        let _this_clone = $(this).parent().parent().clone()
+        $(this).parent().parent().after(_this_clone)
+        $('form.tpl-options-form').trigger('submit');
+    }).on('input change focus', '.block-title-input', function () {
+        let _tar = $(this).parent().prev().find('item')
+        if ($(this).parent().hasClass('tpl-block-upload')) {
+            _tar = $(this).parent().parent().prev().find('item')
+        }
+        _tar.html($(this).val())
+    }).on('click', '.vtpl-switch-item input[type="checkbox"]', function () {
+        if ($(this).is(":checked")) {
+            $(this).parent().parent().addClass('vtpl-checked')
+        } else {
+            $(this).parent().parent().removeClass('vtpl-checked')
+        }
     }).on('mouseenter', '.tpl-options-form input[type="file"]', function () {
         input = $(this);
         trueInput.css(input.offset());
@@ -109,15 +243,19 @@ $(function () {
         $.ajax({
             url: that.attr('action'), type: 'post', data: that.serialize(), cache: false, dataType: 'json', // beforeSend: loading,
             success: function (data) {
-                showMsg(data.code, data.msg);
+                if (data.code === 1) {
+                    emlog_msg('error', data.msg, 2500);
+                    return false;
+                }
+                emlog_msg('success', data.msg, 2500)
             }, error: function () {
-/*vot*/                showMsg(1, lang('network_error'));
+                emlog_msg('error', lang('network_error'), 2500);
             }, complete: function () {
                 // loading(false);
             }
         });
         return false;
-    }).on('change', '.tpl-options-form input, .tpl-options-form textarea', function () {
+    }).on('change', '.tpl-options-form input:not(.chosen-search-input,.tpl-image), .tpl-options-form textarea', function () {
         $('form.tpl-options-form').trigger('submit');
     });
     //Define method
@@ -143,7 +281,7 @@ $(function () {
             $('[name="' + target + '"]').val(path).trigger('change');
             $('[data-name="' + target + '"]').attr('href', src).find('img').attr('src', src);
         } else {
-/*vot*/            alert(lang('upload_failed') + msg)
+            alert(lang('upload_failed') + msg)
         }
         trueInput.val('');
         target = '';
@@ -151,11 +289,11 @@ $(function () {
     };
 
     function initOptionSort() {
-        $('.option-sort-left').each(function () {
-            $(this).find('.option-sort-name:first').addClass('selected');
+        $('.option-sort-tag-left').each(function () {
+            $(this).find('.option-sort-tag-name:first').addClass('selected');
         });
-        $('.option-sort-right').each(function () {
-            $(this).find('.option-sort-option:first').addClass('selected');
+        $('.option-sort-tag-right').each(function () {
+            $(this).find('.option-sort-tag-option:first').addClass('selected');
         });
     }
 
@@ -217,15 +355,12 @@ $(function () {
         });
     }
 });
-$(window).scroll(function () {
-    if ($(this).scrollTop() > 50) {
-        $('#goTopbtn').fadeIn();
-    } else {
-        $('#goTopbtn').fadeOut();
-    }
-});
 
 function TplShow(a) {
     $('.option').hide();
     $('.' + a).fadeIn();
+}
+
+function block_drag_end() {
+    $('form.tpl-options-form').trigger('submit');
 }

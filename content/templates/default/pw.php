@@ -1,20 +1,20 @@
 <?php
+
 /**
  * Input the article password page
  */
-if (!defined('EMLOG_ROOT')) {
-    exit('error!');
-}
+defined('EMLOG_ROOT') || exit('access denied!');
 ?>
 <!doctype html>
 <html lang="zh-cn">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<!--vot-->    <title><?= lang('page_password_enter') ?></title>
+    <title><?= lang('page_password_enter') ?></title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: helvetica neue, Helvetica, Arial, sans-serif;
             background-color: #f5f5f5;
         }
 
@@ -71,16 +71,16 @@ if (!defined('EMLOG_ROOT')) {
         }
     </style>
 </head>
+
 <body>
-<form action="" method="post">
-<!--vot-->    <h1><?= lang('page_password_enter') ?></h1>
-    <div style="display: flex;">
-        <input type="password" id="logpwd" name="logpwd" required autofocus>
-<!--vot-->        <button type="submit"><?= lang('submit') ?></button>
-    </div>
-<!--vot-->    <a href="<?= BLOG_URL ?>"><?= lang('back_home') ?></a>
-</form>
+    <form action="" method="post">
+        <h1><?= lang('page_password_enter') ?></h1>
+        <div style="display: flex;">
+            <input type="password" id="logpwd" name="logpwd" required autofocus>
+            <button type="submit"><?= lang('submit') ?></button>
+        </div>
+        <a href="<?= BLOG_URL ?>"><?= lang('back_home') ?></a>
+    </form>
 </body>
+
 </html>
-
-

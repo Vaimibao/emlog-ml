@@ -1,57 +1,150 @@
 /**
- * Template style sheet
+ * 模板样式表
  */
-
-/* Global style
----------------------------------------------------*/
-/* Disable scroll bar for a page overflow */
 :root {
-    overflow-x: hidden
+    --marRadius: 5px;
+    --conBgcolor: #ffffff; /* 导航、卡片、内容的背景颜色 */
+    --bodyBground: #f5f5f6; /* 页面背景颜色 */
+    --fontColor: #5a5c69; /* 普通文本的颜色 */
+    --aColor: #333333; /* a 标签的颜色 */
+    --aHoverColor: #f6607d; /* a 标签 hover 状态的颜色 */
+    --lightColor: #757575; /* 比较浅一点的文本颜色 */
+
+    /* 表单和按钮的常规样式 */
+    --inputBgColor: #ffffff;
+    --inputBorderColor: #cccccc;
+    --inputTextColor: #333333;
+    --buttonBgColor: #cccccc;
+    --buttonTextColor: #ffffff;
+    --buttonBorderColor: #cccccc;
+    --selectBgColor: #ffffff;
+    --selectBorderColor: #cccccc;
+    --selectTextColor: #333333;
+    --dividerColor: #e0e0e0;
+    --borderColor: #00000019;
 }
 
-/* Some variables */
-* {
-    --marRadius: 8px;              /* Card rounded corners */
-    --conBgcolor: #ffffff;   /* Background color for navigation, cards, content */
-    --bodyBground: #f5f5f6;  /* Page background color */
-    --fontColor: #5a5c69;    /* Normal text color */
-    --aColor:  #333333;      /* Link color (a tag) */
-    --aHoverColor:  #f6607d; /* Link hover color */
-    --lightColor: #757575      /* Lighter text color */
+/* 黑夜模式 */
+[data-theme="dark"] {
+    --conBgcolor: #2e2e2e; /* 导航、卡片、内容的背景颜色 */
+    --bodyBground: #121212; /* 页面背景颜色 */
+    --fontColor: #ffffff; /* 普通文本的颜色 */
+    --aColor: #cfcfcf; /* a 标签的颜色 */
+    --aHoverColor: #f6607d; /* a 标签 hover 状态的颜色 */
+    --lightColor: #757575; /* 比较浅一点的文本颜色 */
+
+    /* 表单和按钮的黑夜模式样式 */
+    --inputBgColor: #3a3a3a;
+    --inputBorderColor: #5a5a5a;
+    --inputTextColor: #cfcfcf;
+    --buttonBgColor: #444444;
+    --buttonTextColor: #ffffff;
+    --buttonBorderColor: #5a5a5a;
+    --selectBgColor: #3a3a3a;
+    --selectBorderColor: #5a5a5a;
+    --selectTextColor: #cfcfcf;
+    --dividerColor: #444444;
+    --borderColor: #848797;
 }
-/* Define width = (border+padding) for all elements to facilitate subsequent calculations */
-* {
-    box-sizing: border-box
-}
-/* Initialization */
+
 body {
     margin: 0;
     line-height: 1.5;
     font-size: 16px;
     color: var(--fontColor);
     background-color: var(--bodyBground);
-    font-family: helvetica neue, Helvetica, Arial, sans-serif
+    font-family: helvetica neue, Helvetica, Arial, sans-serif;
 }
 
+/* 其他样式 */
 h1, h2, h3, h4, h5, h6 {
     margin-top: 0;
-    font-weight: 400
+    font-weight: 400;
 }
 
 p {
     line-height: 2;
-    margin: 30px 0
+    margin: 30px 0;
 }
 
 a {
     color: var(--aColor);
     transition: all 0.2s;
-    text-decoration: none 
+    text-decoration: none;
 }
 
 a:focus, a:hover {
     color: var(--aHoverColor);
-    text-decoration: none
+    text-decoration: none;
+}
+
+/* 表单输入框样式 */
+input, textarea {
+    background-color: var(--inputBgColor);
+    border: 1px solid var(--inputBorderColor);
+    color: var(--inputTextColor);
+    padding: 10px;
+    border-radius: var(--marRadius);
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 按钮样式 */
+button {
+    background-color: var(--buttonBgColor);
+    color: var(--buttonTextColor);
+    border: 1px solid var(--buttonBorderColor);
+    padding: 10px 20px;
+    border-radius: var(--marRadius);
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+button:hover {
+    background-color: darken(var(--buttonBgColor), 10%);
+    border-color: darken(var(--buttonBorderColor), 10%);
+}
+
+/* 下拉选择框样式 */
+select {
+    background-color: var(--selectBgColor);
+    border: 1px solid var(--selectBorderColor);
+    color: var(--selectTextColor);
+    padding: 10px;
+    border-radius: var(--marRadius);
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 分割线样式 */
+hr {
+    border: none;
+    border-top: 1px solid var(--dividerColor);
+    margin: 20px 0;
+}
+
+.small {
+    font-size: 12px;
+}
+
+.m-r-3 {
+    margin-right: 3px;
+}
+
+.m-r-5 {
+    margin-right: 5px;
+}
+
+.m-r-10 {
+    margin-right: 10px;
+}
+
+/* 定义所有元素的 width =（border+padding），方便后续计算 */
+* {
+    box-sizing: border-box
 }
 
 img {
@@ -60,17 +153,18 @@ img {
 
 hr {
     border: 0;
-    border-top: 1px solid rgba(0,0,0,.1)
+    border-top: 1px solid rgba(0, 0, 0, .1)
 }
 
 blockquote {
     font-style: italic;
     color: #868e96
 }
-input,textarea {
+
+input, textarea {
     font-family: inherit;
-    color: #495057;
-    outline:none
+    color: #848797;
+    outline: none
 }
 
 input[type="submit"] {
@@ -84,7 +178,8 @@ textarea {
 footer {
     margin-top: 60px;
     background-color: var(--conBgcolor);
-} 
+}
+
 footer .list-inline {
     margin: 0;
     padding: 0
@@ -95,29 +190,30 @@ footer .copyright {
     margin-bottom: 0;
     text-align: center
 }
-/* Non styled list  */
 
+/* 无样式列表  */
 .unstyle-li {
     padding-left: 0px;
     list-style: none;
     margin-block: 8px;
     font-size: medium
 }
-/* Card attributes. The page is composed of cards, which are directly configured here, so that the cards on the entire page have a uniform inner margin. */
+
+/* 卡片属性。页面以卡片形式组成，这里直接配置，让整个页面的卡片有统一的内边距。 */
 .card-padding {
     padding: 1.25rem
 }
 
-/* Layout
-   Select the flex layout on the row and set the allowable wrapping (wrap)
-   Column (col) needs to be configured separately according to the size of the screen. This is the most important part of the web page and the skeleton of the entire web page.
+/* 布局
+   行（row）上选择flex布局，并设置允许换行（wrap）
+   列（col）则需要通过根据大小屏分别配置，这是网页最重要的地方，是整个网页的骨架
 ---------------------------------------------------*/
 .row {
     display: flex;
     flex-wrap: wrap;
 }
 
-/* Columns under the big screen */
+/* 大屏下的列 */
 @media (min-width: 768px) {
     .column-big {
         padding-right: 10px;
@@ -125,7 +221,7 @@ footer .copyright {
         max-width: 66.666667%
     }
 
-    /* Toolbar */
+    /* 工具栏列 */
     .column-small {
         font-size: medium;
         padding-left: 20px;
@@ -134,7 +230,7 @@ footer .copyright {
         max-width: 33.333333%
     }
 
-    /* The configuration of the two columns of article publication time and article reading comments */
+    /* 文章发布时间和文章阅读评论数这两列的配置 */
     .info-row {
         padding: 1rem !important
     }
@@ -150,8 +246,8 @@ footer .copyright {
         text-align: right
     }
 }
-/* Columns under the small screen */
 
+/* 小屏下的列 */
 @media (max-width: 767px) {
 
     .column-big {
@@ -160,14 +256,14 @@ footer .copyright {
         width: 100%
     }
 
-    /* Toolbar */
+    /* 工具栏列 */
     .column-small {
         padding-right: 8px;
         padding-left: 8px;
         width: 100%
     }
 
-    /* The configuration of the two columns of article publication time and article reading comment number */
+    /* 文章发布时间和文章阅读评论数两列的配置 */
     .log-info {
         flex: 0 0 60%;
         max-width: 60%
@@ -181,20 +277,41 @@ footer .copyright {
     }
 }
 
-/* Responsive configuration of the outermost overall container, namely container configuration
+/* 最外层整体容器的响应式配置，即 container 配置
 ---------------------------------------------------*/
 .container {
     width: 100%;
-    align-items: center; /* The webpage container is vertically centered throughout the webpage */
+    align-items: center; /* 网页容器在整个网页中垂直居中 */
     margin-right: auto;
     margin-left: auto
 }
-/* Configuration of container on different screens */
-@media (min-width: 576px) {.container {max-width: 540px}}
-@media (min-width: 768px) {.container {max-width: 720px}}
-@media (min-width: 992px) {.container {max-width: 960px}}
-@media (min-width: 1201px) {.container {max-width: 1140px}}
-/* Set the inner and outer margins of the container on the small screen to make it more in line with the look and feel of the small screen */
+
+/* container 在不同屏幕下的配置 */
+@media (min-width: 576px) {
+    .container {
+        max-width: 540px
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 720px
+    }
+}
+
+@media (min-width: 992px) {
+    .container {
+        max-width: 960px
+    }
+}
+
+@media (min-width: 1201px) {
+    .container {
+        max-width: 1140px
+    }
+}
+
+/* 设置 container 在小型屏幕上的内外边距 ，使其更符合小型屏幕的观感体验 */
 @media (min-width: 768px) {
     .container {
         padding-right: 15px;
@@ -204,7 +321,7 @@ footer .copyright {
     }
 }
 
-/* In the case of absolute positioning, the full width of the main sidebar (for some objects in the main sidebar whose width is difficult to calculate)
+/* 在绝对定位情况下，主边栏的全宽(可供一些位于主边栏的难以计算宽度的对象使用)
 ---------------------------------------------------*/
 @media (min-width: 1px) {
     .rea-width {
@@ -236,7 +353,7 @@ footer .copyright {
     }
 }
 
-/* There is no gap at the bottom (footer) of the blog page (that is, to prevent the weird phenomenon that the footer appears in the middle of the page)
+/* 博客页面底部（footer）没有空隙（即防止 footer 在页面中间位置出现的诡异现象）
 ---------------------------------------------------*/
 body {
     display: flex;
@@ -256,20 +373,21 @@ body {
     flex: 0 0 auto;
 }
 
-/* Configuration of blog header attributes
+/* 博客头部属性的配置
 ---------------------------------------------------*/
 .blog-header {
     margin-bottom: 2.3rem;
     background-color: var(--conBgcolor);
-	box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.02)
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.02)
 }
 
 .blog-header-c {
     height: 71.63px;
     display: flex;
-    justify-content: space-between /* The navigation bar is aligned at both ends of the main axis, that is, the heading and the navigation are two parts, one is aligned to the left, and the other is aligned to the right. */
+    justify-content: space-between /* 导航栏为主轴方向两端对齐，即大标题与导航两部分，一个向左靠齐，一个向右靠齐 */
 }
-/* Blog title and subtitle */
+
+/* 博客标题和副标题 */
 .blog-header-title {
     font-size: 26px;
     z-index: 1
@@ -283,8 +401,8 @@ body {
     z-index: 0
 }
 
-/* The padding-block of the navigation link should be large, so that the sub-navigation label can still be evoked after the cursor leaves the character for a certain distance
- * In addition, the list item of the li tag is marked as empty (list-style: none) */
+/* 导航链接的上下内边距（padding-block）要大，可使光标离开字符后一段距离依然能唤起子导航标签
+ * 另外li标签的列表项标记为空 （list-style: none） */
 .nav-link {
     padding: 1rem 0.5rem 1rem 0.5rem
 }
@@ -293,79 +411,33 @@ body {
     list-style: none
 }
 
-/* Dropdown */
-.drop {
-    position: relative;
-    display: inline-block;
-}
-
-.drop .toggle {
-    cursor: pointer;
-    color: #333333;
-}
-
-.down {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    white-space: nowrap;
-    min-width: 6em;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-}
-
-.down.right {
-    right: 0;
-}
-
-.down a {
-    color: black;
-    padding: 4px;
-    text-align: left;
-    text-decoration: none;
-    display: block;
-}
-
-.down a:hover {
-    background-color: #f0f0f0;
-    text-decoration: none;
-}
-
-.drop:hover .down {
-    display: block;
-}
-
-.drop:hover .toggle {
-}
-
-/* Change language */
-.language {
-}
-
-/* Responsive configuration of navigation list
-   On screens of different sizes, the navigation menu will have different styles.
-   There are two styles according to the screen size: above 767px and below 767px
+/* 导航列表的响应式配置
+   在不同大小的屏幕上，导航菜单会有不同的样式。
+   样式根据屏幕大小分为两种：767px以上，767px以下
 ---------------------------------------------------*/
-/* Large screen */
+/* 大屏幕 */
 @media (min-width: 768px) {
     .nav-list {
         display: flex;
         padding-block: 4.5px;
         text-align: center
     }
-    /* Large screen list style */
+
+    /* 大屏幕列表样式 */
     .list-menu .list-menu {
         border-bottom: 1px solid #f1f1f1;
     }
 
-    .list-menu:last-child { 
+    .list-menu:last-child {
         border-bottom: unset
     }
+
     .blog-header-toggle {
         display: none
     }
 }
-/* Small screen */
+
+/* 小屏幕 */
 @media (max-width: 767px) {
     .header {
         padding: 0.6rem 1rem;
@@ -384,13 +456,15 @@ body {
         left: 17px;
         top: -9px
     }
-    /* Display the toggle menu border and toggle menu only on the small screen */
+
+    /* 仅在小屏幕上显示切换菜单边框和切换菜单 */
     .blog-header-toggle {
         cursor: pointer;
         position: absolute;
         top: 25px;
         right: 25px;
     }
+
     .blogtoggle-icon {
         display: inline-block;
         width: 28px;
@@ -398,17 +472,19 @@ body {
         margin-top: -3px;
         vertical-align: middle;
     }
-    /* The navigation of the small screen becomes a drop-down box */
+
+    /* 小屏幕的导航变成下拉框 */
     .blog-header-nav {
         display: none;
         z-index: 999;
         position: absolute;
         width: calc(100% - 4px);
-        background: white;
+        background: var(--bodyBground);
         top: 72px;
         left: 0
     }
-    /* List style of the header on the small screen */
+
+    /* 小屏幕上头部的列表样式 */
     .nav-list {
         margin-top: 0px;
         margin-bottom: 10px
@@ -420,8 +496,8 @@ body {
     }
 }
 
-/* The drop-down box style under the big screen, the transparency set here is 0 (opacity: 0.0;). But in the small screen state
- * There is no hidden, so the following will cover this attribute in the small screen part, that is, the part below 767px. */
+/* 大屏幕下的下拉框样式，这里设置的透明度为0（opacity: 0.0;）。但小屏状态下
+ * 没有隐藏，所以下面会在小屏部分，即767px及以下的部分对这个属性覆盖。 */
 .dropdown-menus {
     background: white;
     opacity: 0.0;
@@ -430,18 +506,18 @@ body {
     margin-left: -26px;
     position: absolute;
     padding-left: 0px;
-    border: 1px solid #f1f1f1;
+    border: 1px solid var(--borderColor);
     border-radius: 4px;
     top: -3000px;
     margin-bottom: -34px;
-	box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.02)
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.02)
 }
 
 .dropdown-menus .list-menu {
     padding: 6px
 }
 
-/* For the small screen attribute of the top menu bar, "small screen" is defined at 767px and below. Of course, this also includes the drop-down box style of the small screen. */
+/* 顶部菜单栏的小屏属性，“小屏”定义在767px及以下。当然这个也包含小屏的下拉框样式。 */
 @media all and (max-width: 767px) {
     .nav-list {
         text-align: left !important;
@@ -449,12 +525,13 @@ body {
         letter-spacing: 3px;
         line-height: 17px
     }
+
     .dropdown-menus {
         opacity: 1;
         margin-left: 0px;
         position: unset;
         padding-left: 30px;
-        border: 0px solid #f1f1f1;
+        border: 0px solid var(--borderColor);
         width: auto;
         top: 0px;
         margin-bottom: 0px;
@@ -463,109 +540,122 @@ body {
     }
 }
 
-/* The style of the drop-down box */
+/* 下拉框的样式 */
 .list-menu:hover .dropdown-menus {
     opacity: 0.95;
     top: 56px;
     transition: opacity 0.2s
 }
 
-/* List articles (or article entries) page
+/* 列出文章（或文章条目）页
 ---------------------------------------------------*/
-/* Attributes of the article publication time on the card */
+/* 卡片上的文章发布时间这部分的属性 */
 .info-row {
     padding: 1rem;
     padding-bottom: 8px !important
 }
 
-/* Article reading page
+/* 文章阅读页
 ---------------------------------------------------*/
-/* The attribute of the hr horizontal line under the article author, time and other information, set the margin-bottom to level four */
+/* 文章作者、时间等信息下hr水平线的属性，设置margin-bottom为四级 */
 .bottom-5 {
     margin-bottom: 1.5rem !important
 }
-/* Label attributes, set margin-top to level three */
+
+/* 标签的属性，设置margin-top为三级 */
 .top-5, .mtop-5 {
     margin-top: 3rem !important
 }
-/* Configuration of verification code modal window */
+
+/* 验证码模态窗的配置 */
 .modal-dialog {
     display: none;
-    background-color: white;
+    background-color: var(--conBgcolor);
     border-radius: var(--marRadius);
-    border: 1px solid #dedede;
+    border: 1px solid var(--borderColor);
     position: fixed;
     z-index: 100;
-    /* Position */
-    top: 35%;
+    top: 50%;
     left: 50%;
-    transform: translate3d(-50%, -50%, 0)
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    max-width: 90%;
+    padding: 20px;
 }
-/* The button of the verification code modal window */
+
+/* 验证码模态窗的按钮 */
 .btn {
     cursor: pointer;
-    color: #848798;
-    background-color: white;
-    padding: 8px 11px;
-    font-weight: 800;
+    color: var(--buttonTextColor);
+    background-color: var(--buttonBgColor);
+    padding: 10px 15px;
+    font-weight: 600;
     border-radius: var(--marRadius);
-    margin-block: 12px;
-    margin-inline: 17.5px;
-    border: 1px solid #dedede
+    margin: 10px 0;
+    border: none;
+    transition: background-color 0.3s;
 }
 
 .btn:hover {
     color: #50525e
-} 
+}
+
 .modal-header {
     text-align: center;
-    border-bottom: 0px;
-    width: 250px;
-    padding: 20px
+    border-bottom: 1px solid var(--dividerColor);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .modal-content img {
-    float: left;
-    height: 32px;
-    margin-left: 20px;
-    margin-block: 30px
+    display: block;
+    margin: 0 auto 20px;
+    height: 40px;
 }
 
 .modal-content input[name="imgcode"] {
-    padding: 6px 8px !important;
-    margin-right: 20px;
-    margin-left: 8px;
-    text-align: left;
-    margin-block: 30px;
-    border: 1px solid #dedede
+    padding: 10px;
+    margin: 10px 0;
+    width: calc(100% - 20px);
+    border: 1px solid var(--borderColor);
+    border-radius: var(--marRadius);
+    box-sizing: border-box;
 }
 
 .modal-content .modal-footer {
-    padding: 10px;
-    text-align: center
+    text-align: center;
+    padding-top: 10px;
 }
-/* After the verification code modal window pops up, the screen background should be locked */
+
+/* 弹出验证码模态窗后，屏幕背景要锁住 */
 .lock-screen {
-    display:none;
+    display: none;
     z-index: 99;
     position: fixed;
     width: 100vw;
     height: 100vh;
-    background-color: #2d2d2b;
+    background-color: rgba(0, 0, 0, 0.5);
     top: 0;
     left: 0;
-    opacity: 0.5
 }
-/* Click style of verification code */
+
+/* 验证码的点击样式 */
 #captcha {
-    cursor: pointer
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
 }
 
-/* No scrolling */
-.scroll-fix {overflow: hidden}
+/* 禁止滚动 */
+.scroll-fix {
+    overflow: hidden
+}
 
-/* Shadow
-   The shadow of the article summary card and the sidebar component card of the article list page and the shadow after the mouse is floating
+/* 阴影
+   文章列出页的文章摘要卡片和边栏组件卡片的阴影和鼠标浮动后的阴影
 ---------------------------------------------------*/
 .shadow-theme {
     box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.02);
@@ -574,73 +664,108 @@ body {
     transition: box-shadow 0.4s
 }
 
-/* Calendar style
+/* 日历样式
 ---------------------------------------------------*/
-/* The loading style of the calendar prevents too much visual changes caused by page turning */
+/* 日历的加载样式，防止翻页造成太大的视觉变化 */
 .cal_loading {
-    margin-bottom: 243px
+    margin-bottom: 243px;
 }
 
 #calendar {
-    color: #212529
+    color: #212529;
 }
-
 
 .calendartop {
     letter-spacing: 3px;
     width: 100%;
     text-align: center;
     margin-bottom: 10px;
-    color: #000
+    color: #000;
 }
 
 .calendartop a {
-    font-weight: 100 !important
+    font-weight: 100 !important;
 }
 
 .calendar {
     margin-bottom: -10px;
-    width: 100%
+    width: 100%;
 }
 
 .calendar td {
     text-align: center;
     padding: 1px 10px;
-    line-height: 1.6
+    line-height: 1.6;
 }
 
 .calendar td a:link {
-	color: #000;
-	font-weight: bolder;    
-	text-decoration: underline
+    color: #000;
+    font-weight: bolder;
+    text-decoration: underline;
 }
 
 .calendar td a:hover {
     color: #886353;
-    text-decoration: none
+    text-decoration: none;
 }
 
 .calendar tr {
-    height: 40px
+    height: 40px;
 }
 
 .day {
     color: #212529;
     background: #eaeaea;
-    border-radius: var(--marRadius)
+    border-radius: var(--marRadius);
 }
 
 .sun {
-    color: #333
+    color: #333;
 }
 
 .week {
-    color: #333
+    color: #333;
 }
 
-/* Sidebar card style
+/* 黑夜模式下的日历样式 */
+[data-theme="dark"] #calendar {
+    color: #cfcfcf;
+}
+
+[data-theme="dark"] .calendartop {
+    color: #cfcfcf;
+}
+
+[data-theme="dark"] .calendar td {
+    color: #cfcfcf;
+}
+
+[data-theme="dark"] .calendar td a:link {
+    color: #cfcfcf;
+}
+
+[data-theme="dark"] .calendar td a:hover {
+    color: #f6607d;
+}
+
+[data-theme="dark"] .day {
+    color: #cfcfcf;
+    background: #3a3a3a;
+    border-radius: var(--marRadius);
+}
+
+[data-theme="dark"] .sun {
+    color: #a8a8a8;
+}
+
+[data-theme="dark"] .week {
+    color: #a8a8a8;
+}
+
+
+/* 侧边栏卡片样式
 ---------------------------------------------------*/
-/* Card inner and outer margins */
+/* 卡片的内边距和外边距 */
 .side-bar {
     font-size: medium
 }
@@ -649,7 +774,8 @@ body {
     margin-bottom: 24px;
     padding: 20px
 }
-/* The title of the sidebar component */
+
+/* 边栏组件的标题 */
 .side-bar h3 {
     position: relative;
     font-size: 17px;
@@ -663,7 +789,7 @@ body {
     line-height: 2
 }
 
-/* Pagination button style
+/* 分页按钮样式
 ---------------------------------------------------*/
 .pagination {
     font-size: 14px;
@@ -680,9 +806,9 @@ body {
 }
 
 .pagination a {
-    color: #c0bcbc;
+    color: var(--aColor);
     padding: 5.5px 10px 6px 10px;
-    background: white;
+    background: var(--buttonBgColor);
     margin: 0 5px;
     line-height: 3;
     border-radius: 8px
@@ -714,14 +840,15 @@ body {
     border-radius: var(--marRadius)
 }
 
-/* Comment style
+/* 评论样式
 ---------------------------------------------------*/
-/* Post comment form style */
+/* 发表评论表单样式 */
 @media (min-width: 768px) {
     .commentform {
-        height: 250px
+        height: 210px
     }
 }
+
 #comments {
     margin-top: 80px;
 }
@@ -732,11 +859,7 @@ body {
 }
 
 .comment-mail {
-    float: left
-}
-
-.comment-url {
-    border-right: 1px #d6d6d6 solid !important;
+    border-right: 1px var(--borderColor) solid !important;
     border-bottom-right-radius: 10px !important
 }
 
@@ -750,7 +873,7 @@ body {
     color: #495057;
     background-color: #fff;
     background-clip: padding-box;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--borderColor);
     border-radius: 0.25rem;
     transition: border-color 0.15s ease-out, box-shadow 0.15s ease-in-out
 }
@@ -762,12 +885,12 @@ body {
 .com_control {
     display: block;
     border-radius: 0px;
-    border: 1px #d6d6d6 solid;
+    border: 1px var(--borderColor) solid;
     border-right: 0px;
     height: 50px
 }
 
-/* The input box prompt in the comment section, centered and hidden */
+/* 评论处的输入框提示，居中、隐藏 */
 .com_control:focus::-webkit-input-placeholder {
     color: rgba(255, 255, 255, 0)
 }
@@ -795,16 +918,6 @@ body {
     margin: 5px 0px
 }
 
-.comment-post .cancel-reply {
-    float: right;
-    cursor: pointer;
-    padding-right: 10%
-}
-
-.comment-post .cancel-reply:hover {
-    text-decoration: underline
-}
-
 .comment-post small {
     font-size: 12px;
     color: #999
@@ -814,12 +927,12 @@ body {
     padding: 7px 40px;
     font-size: small;
     color: #848797;
-    width: 33.3333334%
+    width: 50%
 }
 
 .comment-post #comment {
     width: 100%;
-    border: 1px #d6d6d6 solid;
+    border: 1px var(--borderColor) solid;
     font-size: small;
     border-radius: var(--marRadius) 10px 0 0;
     height: 130px;
@@ -827,7 +940,7 @@ body {
 }
 
 .comment-post #comment_submit {
-/*vot*/    width: auto;
+    width: 84px;
     height: 35px;
     text-align: center;
     font-size: 14px;
@@ -835,15 +948,15 @@ body {
     float: right;
     margin-right: 1px;
     border-radius: 8px;
-    border: 1px solid #dedede;
+    border: 1px solid var(--borderColor);
     padding: 7px 10px;
     justify-content: center
 }
 
 .comment-post #comment_submit:hover {
     cursor: pointer;
-    color: #fff;
-    background-color: #007bff
+    color: var(--inputTextColor);
+    background-color: var(--buttonBgColor);
 }
 
 .comment-post .input {
@@ -854,13 +967,12 @@ body {
     margin: 10px 0;
     padding: 10px 0px;
     font-size: medium;
-    border-bottom: 1px #f7f7f7 solid;
     overflow: hidden;
     color: #333
 }
 
 .comment span {
-    color: #ff7a15
+    color: var(--fontColor);
 }
 
 .comment .comment-time {
@@ -875,12 +987,12 @@ body {
 }
 
 .comment .comment-infos {
-    background: #f7f7f7;
-    padding: 12px;
-    padding-bottom: 5px;
+    background: var(--bodyBground);
+    padding: 12px 12px 5px;
     border-radius: var(--marRadius);
     margin-top: 9px;
-    margin-left: 58px
+    margin-left: 58px;
+    color: var(--fontColor);
 }
 
 .comment .comment-infos-unGravatar {
@@ -891,19 +1003,20 @@ body {
     margin-bottom: 80px;
 }
 
-/* Arrow pointing to the commenter's avatar in the comment list */
+/* 评论列表中指向评论者头像的箭头 */
 .arrow {
     position: absolute;
     margin-top: 3px;
     margin-left: -34px;
     border-width: 13px;
     border-style: solid;
-    border-color: transparent #f7f7f7 transparent transparent
+    border-color: transparent var(--bodyBground) transparent transparent
 }
 
 .comment .comment-content {
-    margin: 8px 0px 0px 0px;
-    word-break: break-word
+    margin: 8px 0 0 0;
+    word-break: break-word;
+    color: var(--fontColor);
 }
 
 .comment .comment-reply {
@@ -921,7 +1034,6 @@ body {
     margin: 20px 10px 10px 20px;
     clear: both;
     border: none;
-/*vot*/ border-top: 1px solid #CCC;
     padding: 0
 }
 
@@ -936,7 +1048,8 @@ body {
     margin-top: -8px;
     white-space: nowrap
 }
-/* The margin-top of the latest comment information in the sidebar should be 0 */
+
+/* 边栏处的最新评论信息margin-top应该是0 */
 .unstyle-li .comment-info {
     margin-top: 4px
 }
@@ -944,17 +1057,19 @@ body {
 .cancel-reply {
     font-size: large
 }
-/* Commenter's avatar */
+
+/* 评论人的头像 */
 .avatar img {
     width: 40px;
+    height: 40px;
     margin-top: 9px;
     margin-right: 4px;
     border-radius: 50%
 }
 
 .unstyle-li input[type="submit"] {
-    background-color: #313131;
-    color: #FFFFFF;
+    background-color: var(--inputBorderColor);
+    color: var(--buttonTextColor);
     margin-left: -25px;
     height: 39px;
     width: 55px;
@@ -962,27 +1077,15 @@ body {
     border-radius: 0 3px 3px 0;
     padding: 0
 }
-/* Reply, Cancel reply buttons in the comment area */
-.comment-replay-btn {
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    background-color: unset
-}
 
-.comment-replay-btn:hover {
-    color: #f6607d;
-    text-decoration: underline;
-    transition: all 0.2s
-}
-
-/*Some styles in article entries
+/*文章条目中的部分样式
 ---------------------------------------------------*/
-/* Title of article entry */
+/* 文章条目的标题 */
 .card-title {
     margin-bottom: 30px
 }
-/* The sticky pattern in the article entry */
+
+/* 文章条目中的置顶图案 */
 .log-topflg {
     user-select: none;
     display: inline-block;
@@ -993,10 +1096,11 @@ body {
     font-size: 14px;
     margin-left: 8px;
     cursor: default;
-    background-color: antiquewhite
+    background-color: antiquewhite;
+    border-radius: 3px;
 }
 
-/* Article content page style
+/* 文章内容页样式
 ---------------------------------------------------*/
 .log-con {
     background-color: var(--conBgcolor);
@@ -1061,12 +1165,14 @@ body {
     font-family: inherit;
     margin: 0
 }
-/* Need to change the name, the friendship link attribute of the sidebar link card */
+
+/* 需要改名，侧边栏链接卡片的友情链接属性 */
 .no-margin-bottom {
     font-size: medium;
     padding-left: 10px
 }
-/* Abstract content section */
+
+/* 摘要内容部分 */
 .loglist-body {
     margin-bottom: -22px;
     font-size: small
@@ -1075,7 +1181,8 @@ body {
 .loglist-body p {
     margin: 0 -6px 0 0
 }
-/* Article title and tags, etc. */
+
+/* 文章标题和标签等 */
 .loglist-title {
     font-size: x-large
 }
@@ -1110,20 +1217,47 @@ body {
     transform: scale(1.01);
     clip: rect(50px, 730px, 250px, 0px)
 }
-/* Article category */
+
+/* 文章分类 */
 .loglist-sort {
     user-select: none;
     display: inline-block;
     position: relative;
-    margin-left: 10px;
-    bottom: 2px;
-    padding: 6px;
-    padding-bottom: 3px;
-    border: 1px solid #e8e8e8
+    height: 26px;
+    padding: 3px 4.5px;
+    bottom: 3.5px;
+    font-size: 14px;
+    margin-left: 8px;
+    cursor: default;
+    background-color: Lavender;
+    border-radius: 3px;
 }
-@media (max-width:415px) {.loglist-cover{ height: 160px;overflow: hidden}.loglist-cover img {position:unset;    width: 730px;}}
-@media (max-width:375px) {.loglist-cover{ height: 140px;overflow: hidden}.loglist-cover img {position:unset;    width: 730px;}}
-/* Other contents of the entry */
+
+@media (max-width: 415px) {
+    .loglist-cover {
+        height: 160px;
+        overflow: hidden
+    }
+
+    .loglist-cover img {
+        position: unset;
+        width: 730px;
+    }
+}
+
+@media (max-width: 375px) {
+    .loglist-cover {
+        height: 140px;
+        overflow: hidden
+    }
+
+    .loglist-cover img {
+        position: unset;
+        width: 730px;
+    }
+}
+
+/* 条目的其他内容 */
 .loglist-content {
     font-size: medium;
     margin-left: 1px;
@@ -1148,7 +1282,8 @@ body {
 .log-count a {
     color: var(--fontColor)
 }
-/* Some styles of sidebar components */
+
+/* 侧边栏组件的一些样式 */
 .bloggerinfo {
     margin-bottom: -10px;
     text-align: center
@@ -1157,7 +1292,7 @@ body {
 .bloggerinfo-img {
     width: 100px;
     height: 100px;
-    border: 0px solid #c2a9a9;
+    border: 0px solid var(--borderColor);
     border-radius: 50%
 }
 
@@ -1176,7 +1311,8 @@ body {
     margin-bottom: 15px;
     color: #929292
 }
-/* Search bar */
+
+/* 搜索栏 */
 .search {
     width: 80%;
     box-shadow: none;
@@ -1185,19 +1321,21 @@ body {
     padding: 0.4rem 0.75rem;
     line-height: 1.5;
     color: #495057;
-    border: 1px solid #ced4da;
-    /* Compatible with Safari, Safari default input will have 1px top and bottom margins */
+    border: 1px solid var(--borderColor);
+    /* 兼容 Safari ，Safari默认input会有1px的上下外边距 */
     margin-block: 0;
     border-radius: 0.25rem
 }
-/* Article reading and article tags */
+
+/* 文章阅读和文章条目的标签 */
 .tags {
-    border: 1px solid #e8e8e8;
+    border: 1px solid var(--borderColor);
     padding: 1px 6px;
     border-radius: 4px;
     white-space: nowrap
 }
-/* Tags in the sidebar widget */
+
+/* 侧边栏组件中的标签 */
 .tag-container {
     margin-block: 0;
     text-overflow: ellipsis
@@ -1208,13 +1346,16 @@ body {
     border-radius: 4px;
     white-space: nowrap
 }
-/* The latest article style in the sidebar widget */
+
+/* 侧边栏组件中的最新文章样式 */
 .blog-lates, .blog-hot {
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis
+    text-overflow: ellipsis;
+    margin-bottom: 8px;
 }
-/* Back to the previous page icon */
+
+/* 返回上页图标 */
 .back-top {
     font-size: 20px;
     text-align: center;
@@ -1223,24 +1364,26 @@ body {
     margin-left: -90px;
     position: absolute;
     top: 151px;
-    border: 1px solid #dcdcdd;
-    color: #dcdcdd;
+    border: 2px solid var(--borderColor);
+    color: var(--fontColor);
     border-radius: 50%;
     cursor: pointer
 }
 
 .back-top:hover {
-    border: 1px solid #bbbbbb;
+    border: 2px solid var(--borderColor);
     color: #bbbbbb
 }
-/* Dividing lines in article entries */
+
+/* 文章条目中的分割线 */
 .list-line {
     border: 0;
     margin-top: 12px;
     margin-bottom: -7px;
-    border-top: 2px solid rgb(245, 245, 246)
+    border-top: 1px solid rgb(245, 245, 246)
 }
-/* Article categories in the sidebar */
+
+/* 侧边栏组件中的文章分类 */
 .log-classify-f {
     letter-spacing: 1px;
     font-size: 16px;
@@ -1252,7 +1395,8 @@ body {
     list-style: none;
     font-size: medium
 }
-/* Latest comments in the sidebar */
+
+/* 侧边栏组件中的最新评论 */
 .logcom-latest-time {
     position: absolute;
     right: 10px;
@@ -1263,13 +1407,15 @@ body {
 
 .comment-info_img {
     width: 27px;
+    height: 27px;
     margin-bottom: 4px;
     margin-right: 3px;
     border-radius: 50%;
     vertical-align: middle;
     border-style: none
 }
-/* Date text style everywhere */
+
+/* 各处的日期文字样式 */
 .date {
     margin: 0;
     text-align: center;
@@ -1286,7 +1432,7 @@ body {
 
 .log-title {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-size: 1.75rem
 }
 
@@ -1294,28 +1440,29 @@ body {
     margin-bottom: 30px;
     font-size: 1.75rem
 }
-/* The style of the adjacent article button */
+
+/* 相邻文章按钮的样式 */
 .neighbor-log {
     overflow: hidden;
     margin-block: 20px
 }
 
 .prev-log {
-    margin: 3px 0px;
+    margin: 3px 0;
     float: left;
-    padding: 6px 6px 4px 6px;
-    font-size: medium;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50rem
+    padding: 4px 8px 4px 8px;
+    font-size: small;
+    border: 1px solid var(--borderColor);
+    border-radius: 0.5rem
 }
 
 .next-log {
-    margin: 3px 0px;
+    margin: 3px 0;
     float: right;
-    padding: 6px 6px 4px 6px;
-    font-size: medium;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50rem
+    padding: 4px 8px 4px 8px;
+    font-size: small;
+    border: 1px solid var(--borderColor);
+    border-radius: 0.5rem;
 }
 
 .comment-info a {
@@ -1327,7 +1474,7 @@ body {
     margin: 4px 0px
 }
 
-/* Web footer
+/* 网页足部
 ---------------------------------------------------*/
 .footinfo {
     line-height: 2;
@@ -1335,7 +1482,7 @@ body {
     text-align: center !important;
 }
 
-/* Image zoom
+/* 图片放大
 ---------------------------------------------------*/
 img[data-action="zoom"] {
     cursor: zoom-in
@@ -1379,7 +1526,7 @@ img.zoom-img {
 }
 
 .cover-unclip {
-    /* The enlarged image has no cropping, no rounded corners, and no transparency */
+    /* 放大后的图片无裁剪、无圆角、无透明度 */
     clip: unset !important;
     border-radius: unset !important;
     opacity: 1 !important
@@ -1395,15 +1542,17 @@ img.zoom-img {
     position: absolute;
     top: 200px
 }
+
 .toc-con .close-toc {
-	color: #dcdcdd;
+    color: #dcdcdd;
     left: 0px;
     position: absolute;
-	padding-top: 5px;
+    padding-top: 5px;
 }
-.toc-con ul{
-	margin: 0;
-	padding: 0
+
+.toc-con ul {
+    margin: 0;
+    padding: 0
 }
 
 .toc-con li {
@@ -1428,12 +1577,13 @@ img.zoom-img {
 .toc-con div::-webkit-scrollbar-thumb {
     background-color: rgb(0 0 0 / 10%)
 }
-/* page style */
+
+/* page 页面 */
 #page {
     margin-bottom: 24px
 }
 
-/* summary overflow operation
+/* 摘要的溢出（overflow）操作 
 ---------------------------------------------------*/
 .subtitle-overflow {
     max-width: 700px;
@@ -1442,7 +1592,7 @@ img.zoom-img {
     text-overflow: ellipsis
 }
 
-/* "archive" style
+/* 「归档」的样式 
 ---------------------------------------------------*/
 .archive {
     color: #929292;
@@ -1451,17 +1601,17 @@ img.zoom-img {
     border-color: #ced4da
 }
 
-/* Article Listing Page Edit Link Styles 
+/* 文章列出页 编辑 链接的样式 
 ---------------------------------------------------*/
 .loglist-article-edit a {
     color: #929292
 }
 
-/* Some styles to adapt to the display effect of each screen size
+/* 一些适应各屏幕尺寸显示效果的样式
 ---------------------------------------------------*/
 @media all and (max-width: 1200px) and (min-width: 992px) {
 
-    /* mh is a class that is convenient for hiding elements on medium and small screens */
+    /* mh 是方便在中、小屏幕隐藏元素的 class */
     .mh {
         display: none
     }
@@ -1474,14 +1624,15 @@ img.zoom-img {
     .bloginfo-name {
         margin-top: 32px
     }
-    /* Calendar in medium screen state */
+
+    /* 中型屏状态下的日历 */
     #calendar {
         margin-left: -8px;
     }
 }
 
 @media all and (max-width: 991px) {
-    /* Header width without container */
+    /* 头部无容器的限宽 */
     .blog-header-c {
         max-width: unset !important
     }
@@ -1495,7 +1646,8 @@ img.zoom-img {
         margin: -2px;
         padding-left: 2px
     }
-    /* mh is a class that is convenient for hiding elements on medium and small screens */
+
+    /* mh 是方便在中、小屏幕隐藏元素的 class */
     .mh {
         display: none
     }
@@ -1525,12 +1677,12 @@ img.zoom-img {
         width: 100%
     }
 
-    /* After expanding the menu, the bottom margin of the blog head becomes larger */
+    /* 展开菜单后，博客头部的下边距变大 */
     .bottom-change {
         margin-bottom: 13px
     }
 
-    /* Optimize the look and feel of the page cards for the article on the small screen */
+    /* 为文章列出页卡片在小屏幕的观感体验优化 */
     .card-title {
         margin-bottom: 10px
     }
@@ -1542,20 +1694,24 @@ img.zoom-img {
     .loglist-tag {
         margin-top: 10px
     }
-    /* The bottom margin of the blog header */
+
+    /* 博客头部的下边距 */
     .blog-header {
         margin-bottom: 1.6rem
     }
-    /* Changes in the comment column */
+
+    /* 评论的信息栏变化 */
     .comment-post input {
         padding: 0.5em 0.75em
     }
-    /* Sidebar Calendar */
+
+    /* 侧边栏日历 */
     #calendar {
         margin-left: 0
     }
 }
-/* The zoom and other adjustment styles made on some unusual devices in the middle size of the tablet */
+
+/* 在平板一些处于中间尺寸的不常见设备所做的缩放和其他一些调整样式 */
 @media all and (max-width: 991px) and (min-width: 768px) {
 
     #calendar {
@@ -1569,13 +1725,15 @@ img.zoom-img {
         width: 255px;
         margin-left: -47px
     }
-    /* The comment content of the latest comment is slightly smaller */
+
+    /* 中屏幕下缩短边栏评论日期显示 */
     .logcom-latest-time {
         max-width: 60px
     }
 
 }
-/* Compromise zooming and other adjustments made to some extremely small screens */
+
+/* 对一些极小尺寸屏幕所做的比较妥协的缩放等调整 */
 @media all and (max-width: 349px) {
 
     #calendar {
@@ -1594,7 +1752,8 @@ img.zoom-img {
         font-size: small
     }
 }
-/* The display style of ordinary mobile devices */
+
+/* 普通移动设备的显示样式 */
 @media all and (max-width: 577px) {
     .dropdown-menus .list-menu {
         padding-bottom: 0px
@@ -1603,7 +1762,8 @@ img.zoom-img {
     .nav-link {
         padding: 8px;
     }
-    /* The inner margin of the card container is slightly smaller */
+
+    /* 卡片容器内边距略小一点 */
     .card-padding {
         padding: 14px;
     }
@@ -1653,7 +1813,8 @@ img.zoom-img {
     .loglist-content p {
         font-size: 14px;
     }
-    /* Comment related */
+
+    /* 评论相关 */
     .comment-post #comment {
         border-radius: 6px;
     }
@@ -1665,12 +1826,13 @@ img.zoom-img {
     .commentform .comment-info {
         margin-top: -5px
     }
+
     #comments {
         margin-bottom: 80px
     }
 
     .com_control {
-        border: 1px solid #ced4da;
+        border: 1px solid var(--borderColor);
         border-radius: 6px !important;
         margin-top: 10px
     }
@@ -1679,17 +1841,22 @@ img.zoom-img {
         margin-bottom: 10px;
     }
 
+    .comment-name {
+        margin-bottom: 10px;
+    }
+
     .comment .comment-post {
         display: table
     }
-    /* New style of comment list */
+
+    /* 评论列表换新样式 */
     .arrow {
         display: none
     }
 
     .comment .comment-infos {
         margin-left: 0;
-        font-size: 14px
+        font-size: 14px;
     }
 
     .comment .avatar {
@@ -1697,29 +1864,32 @@ img.zoom-img {
         height: 30px;
         width: 30px;
     }
-    /* Summary overflow peration is a bit more cropped on small screens */
+
+    /* 摘要的溢出（overflow）操作 在 小屏幕上要截得多一点 */
     .subtitle-overflow {
         max-width: 80%
     }
-    /* Optimize the display of the drop-down menu at the top of the webpage on the mobile terminal */
+
+    /* 网页顶部的下拉菜单在移动端的显示优化 */
     .dropdown-menus .list-menu {
         padding: 0px;
         letter-spacing: 2px
     }
 }
-/* Styles for mobile toc */
+
+/* 为 toc 移动端设立的样式 */
 @media all and (max-width: 1274px) {
     .toc-con {
         height: 100vh;
         width: 60%;
         max-width: 300px;
         padding-right: 30px;
-        /* frozen effect */
+        /* 磨砂效果 */
         background: rgba(237, 237, 237, 0.8);
         backdrop-filter: blur(2px);
-        /* Compatible with Safari matte effect */
+        /* 兼容 Safari 磨砂效果 */
         -webkit-backdrop-filter: blur(2px);
-        /* always fixed position */
+        /* 始终固定位置 */
         z-index: 2;
         position: fixed !important;
         top: 0 !important
@@ -1729,5 +1899,112 @@ img.zoom-img {
         color: rgb(189, 189, 189);
         font-size: 10px;
         padding-left: 10px;
+    }
+}
+
+/* 侧边栏文章封面样式 */
+.side-cover-image {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    background-size: cover;
+    background-position: center;
+}
+
+.side-title-container {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.side-title-container a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+}
+
+#theme-toggle {
+    cursor: pointer;
+    padding: 8px;
+}
+
+/* 首页轮播图样式 */
+* {
+    box-sizing: border-box;
+}
+
+.slideshow-container {
+    max-width: 1000px;
+    position: relative;
+    margin: auto;
+}
+
+.mySlides {
+    display: none;
+}
+
+.slideshow-prev,
+.slideshow-next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    margin-top: -22px;
+    padding: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    transition: 0.6s ease;
+    border-radius: 0 3px 3px 0;
+}
+
+.slideshow-next {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.slideshow-prev:hover,
+.slideshow-next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.slideshow-text {
+    color: #f2f2f2;
+    font-size: 15px;
+    padding: 8px 12px;
+    position: absolute;
+    bottom: 8px;
+    width: 100%;
+    text-align: center;
+}
+
+.active {
+    background-color: #717171;
+}
+
+.fade {
+    -webkit-animation-name: fade;
+    -webkit-animation-duration: 1.5s;
+    animation-name: fade;
+    animation-duration: 1.5s;
+}
+
+@-webkit-keyframes fade {
+    from {
+        opacity: .4;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade {
+    from {
+        opacity: .4;
+    }
+    to {
+        opacity: 1;
     }
 }

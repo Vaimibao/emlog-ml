@@ -1,8 +1,9 @@
 <?php
+
 /**
  * page
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -15,13 +16,33 @@ require_once 'globals.php';
 if (empty($action)) {
     $emPage = new Log_Model();
 
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $page = Input::getIntVar('page', 1);
+    $keyword = Input::getStrVar('keyword');
+    $order = Input::getStrVar('order');
 
-    $sqlSegment = ' ORDER BY date DESC';
-    $pages = $emPage->getLogsForAdmin($sqlSegment, '', $page, 'page');
-    $pageNum = $emPage->getLogNum('', '', 'page', 1);
+    $condition = '';
+    if ($keyword) {
+        $condition = "and title like '%$keyword%'";
+    }
 
-    $pageurl = pagination($pageNum, Option::get('admin_perpage_num'), $page, "./page.php?page=");
+    $orderBy = ' ORDER BY ';
+    switch ($order) {
+        case 'view':
+            $orderBy .= 'views DESC';
+            break;
+        case 'comm':
+            $orderBy .= 'comnum DESC';
+            break;
+        default:
+            $orderBy .= 'date DESC';
+            break;
+    }
+
+    $perPage = 20;
+    $pages = $emPage->getLogsForAdmin($condition . $orderBy, '', $page, 'page', $perPage);
+    $pageNum = $emPage->getLogNum('', $condition, 'page', 1);
+
+    $pageurl = pagination($pageNum, $perPage, $page, "./page.php?page=");
 
     include View::getAdmView('header');
     require_once(View::getAdmView('page'));
@@ -39,7 +60,10 @@ if ($action == 'new') {
         'hide'            => '',
         'template'        => 'page',
         'is_allow_remark' => 'n',
+        'is_home_page'    => 'n',
         'att_frame_url'   => 'attachment.php?action=selectFile',
+        'link'            => '',
+        'cover'           => '',
     );
     extract($pageData);
 
@@ -62,7 +86,7 @@ if ($action == 'mod') {
     $customTemplates = $Template_Model->getCustomTemplates('page');
 
     $containertitle = lang('page_edit');
-    $pageId = isset($_GET['id']) ? (int)$_GET['id'] : '';
+    $pageId = Input::getIntVar('id');
     $pageData = $emPage->getOneLogForAdmin($pageId);
     extract($pageData);
 
@@ -70,7 +94,11 @@ if ($action == 'mod') {
     $Media_Model = new Media_Model();
     $medias = $Media_Model->getMedias();
 
+    $MediaSort_Model = new MediaSort_Model();
+    $mediaSorts = $MediaSort_Model->getSorts();
+
     $is_allow_remark = $allow_remark == 'y' ? 'checked="checked"' : '';
+    $is_home_page = Option::get('home_page_id') == $pageId ? 'checked="checked"' : '';
 
     include View::getAdmView('header');
     require_once(View::getAdmView('page_create'));
@@ -82,13 +110,16 @@ if ($action == 'save') {
     $emPage = new Log_Model();
     $Navi_Model = new Navi_Model();
 
-    $title = isset($_POST['title']) ? addslashes(trim($_POST['title'])) : '';
-    $content = isset($_POST['pagecontent']) ? addslashes(trim($_POST['pagecontent'])) : '';
-    $alias = isset($_POST['alias']) ? addslashes(trim($_POST['alias'])) : '';
-    $pageId = isset($_POST['pageid']) ? (int)trim($_POST['pageid']) : -1;
-    $ishide = isset($_POST['ishide']) && empty($_POST['ishide']) ? 'n' : addslashes($_POST['ishide']);
-    $template = isset($_POST['template']) && $_POST['template'] != 'page' ? addslashes(trim($_POST['template'])) : '';
-    $allow_remark = isset($_POST['allow_remark']) ? addslashes(trim($_POST['allow_remark'])) : 'n';
+    $title = Input::postStrVar('title');
+    $content = Input::postStrVar('pagecontent');
+    $alias = Input::postStrVar('alias');
+    $pageId = Input::postIntVar('pageid', -1);
+    $ishide = Input::postStrVar('ishide') === '' ? 'n' : Input::postStrVar('ishide');
+    $template = Input::postStrVar('template') != 'page' ? Input::postStrVar('template') : '';
+    $allow_remark = Input::postStrVar('allow_remark', 'n');
+    $home_page = Input::postStrVar('home_page', 'n');
+    $link = Input::postStrVar('link');
+    $cover = Input::postStrVar('cover');
 
     $postTime = time();
 
@@ -107,6 +138,8 @@ if ($action == 'save') {
         'alias'        => $alias,
         'type'         => 'page',
         'template'     => $template,
+        'link'         => $link,
+        'cover'        => $cover,
     );
 
     $directUrl = '';
@@ -118,7 +151,15 @@ if ($action == 'save') {
         $directUrl = './page.php?active_hide_n=1';
     }
 
+    if ($home_page === 'y') {
+        Option::updateOption('home_page_id', $pageId);
+    } elseif (Option::get('home_page_id') == $pageId) {
+        Option::updateOption('home_page_id', 0);
+    }
+
     $CACHE->updateCache(array('options', 'logalias'));
+
+    doAction('save_page', $pageId, $logData);
 
     switch ($action) {
         case 'autosave':
@@ -131,8 +172,8 @@ if ($action == 'save') {
 }
 
 if ($action == 'operate_page') {
-    $operate = isset($_POST['operate']) ? $_POST['operate'] : '';
-    $pages = isset($_POST['page']) ? array_map('intval', $_POST['page']) : array();
+    $operate = Input::postStrVar('operate');
+    $pages = Input::postIntArray('page');
 
     LoginAuth::checkToken();
 
@@ -140,25 +181,23 @@ if ($action == 'operate_page') {
 
     switch ($operate) {
         case 'del':
+            $home_page_id = Option::get('home_page_id');
             foreach ($pages as $value) {
                 $emPage->deleteLog($value);
-                unset($navibar[$value]);
+                // 如果被删除的页面是首页，需要恢复默认首页
+                if ($home_page_id == $value) {
+                    Option::updateOption('home_page_id', 0);
+                }
             }
-            $navibar = addslashes(serialize($navibar));
-            Option::updateOption('navibar', $navibar);
             $CACHE->updateCache(array('options', 'sta', 'comment', 'logalias'));
-
-            emDirect("./page.php?active_del=1");
+            emDirect("./page.php");
             break;
         case 'hide':
         case 'pub':
             $ishide = $operate == 'hide' ? 'y' : 'n';
             foreach ($pages as $value) {
                 $emPage->hideSwitch($value, $ishide);
-                $navibar[$value]['hide'] = $ishide;
             }
-            $navibar = addslashes(serialize($navibar));
-            Option::updateOption('navibar', $navibar);
             $CACHE->updateCache(array('options', 'sta', 'comment'));
             emDirect("./page.php?active_hide_" . $ishide . "=1");
             break;

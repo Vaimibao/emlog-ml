@@ -1,57 +1,67 @@
 <p align="center">
   <img src="./admin/views/images/logo.png" width=100 />
 </p>
+
+<p align="center"><b>emlog</b></p>
+<p align="center">Lightweight blog and CMS website building system</p>
+
 <p align="center">
-	<a href="https://github.com/emlog/emlog-ml/releases/latest"><img src="https://img.shields.io/github/v/release/emlog/emlog?logo=github" alt="GitHub release" /></a>
-	<a href="https://emlog.in/docs/#/"><img src="https://img.shields.io/badge/docsify-document-brightgreen" alt="Document" /></a>
-</p>
-
-# emlog
-
-emlog is a lightweight blog and CMS website building system, dedicated to creating a better personal cloud content
-management system.
+<a href="https://github.com/emlog/emlog/releases"><img alt="GitHub release" src="https://img.shields.io/github/release/emlog/emlog.svg?style=flat-square&include_prereleases" /></a>
+<a href="https://github.com/emlog/emlog/commits"><img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/emlog/emlog.svg?style=flat-square" /></a>
 
 ## Overview
 
-- Markdown Editor: Built-in Markdown editor with automatic saving, making the writing process more comfortable and
-  efficient.
-- Multiple User Roles: Supports multiple user roles, as well as user registration and login functions, facilitating
-  interaction between readers and authors.
-- Multimedia Resource Manager: Built-in multimedia resource manager for easy uploading and management of various media
-  resources such as images, audio, video, and files.
-- Template Themes: The app store provides a variety of template themes to easily create unique websites with personal
-  style.
-- Plugin Ecosystem: Has a powerful plugin extension system for quickly expanding site functionality to meet specific
-  needs.
-- Powerful SEO Features: Supports customizing article URLs, TDK customization for site and category pages to improve
-  site visibility in search engines.
-- Custom Sidebar Management: Provides flexible sidebar component management.
-- Custom Pages: Supports creating custom pages including message boards, personal introductions, etc., helping you
-  create more personalized and functional websites.
-- Tags and Categories: Articles can be easily categorized and tagged to provide better information organization and
-  retrieval capabilities.
+- Markdown support
+- Multi-user role management
+- Flexible labeling and classification
+- Multimedia Resource Management
+- Full SEO support
+- Built-in API
+- Rich template themes
+- Pluggable extension ecosystem
+- Native AI support
 
-## Quick Start (Docker)
+## Official website
+
+https://www.emlog.net
+
+## Requirements
+
+* PHP5.6、PHP7、PHP8，PHP7.4 and above is recommended
+* MySQL5.6 or later, or MariaDB 10.3 or later
+* Recommended server environments:Linux + nginx
+* Recommended server: Cloud server, such as: [Aliyun ECS](https://www.aliyun.com/daily-act/ecs/activity_selection?userCode=n4ts9qpa)，[Rainyun - KVM](https://www.rainyun.com/MzI2NDkz_)
+* Server management panel software recommended：[Bt panel](https://www.bt.cn/u/N0UABa) （support[Deploy emlog with one click](install_bt.md)）
+* Browsers recommend: Chrome、Edge
+
+## Regular installation
+
+1. [Downloading the emlog](https://www.emlog.net/download), Upload all the unzipped files to the web root directory of the server, or directly upload the zip installation package and unzip it online.
+2. In the browser to visit the site domain name, the program will automatically jump to the installation page, follow the prompts to install.
+3. The installation process will not create the database, you need to create it in advance, click "Install emlog!", the installation is successful.
+
+## Other ways to Install
+
+- [Bt panel one click deployment](/install/install_bt.md)
+- [1Panel deployment](/install/install_1panel.md)
+- [docker deployment](/install/install_docker.md)
+- [Soft routing iStoreOS system deployment](https://www.bilibili.com/video/BV1mHpjeGEDu)
+
+## Rapid deployment with docker
+
+To quickly start emlog, use the emlog/emlog:pro-latest-php7.4-apache mirror.The image contains the latest version of emlog, Apache services, and the necessary extensions, but not MySQL, which requires additional installation and database creation.
 
 ```bash
 $ docker run --name emlog-pro -p 8080:80 -d emlog/emlog:pro-latest-php7.4-apache
 ```
 
-## Download
+## docker-compose
 
-[Download emlog pro](https://emlog.in/download)
-
-## Changelog
-
-[changelog](https://emlog.in/docs/#/changelog)
-
-## Requirements
-
-* PHP5.6\PHP7\PHP8, PHP7.4 recommended
-* MySQL5.6+, 5.6 is recommended
-* Recommended server environment: Linux + nginx
+1. cp config.sample.php config.php
+2. docker network create emlog_network
+3. docker-compose up -d
+4. http://localhost:8080
 
 ## License Agreement
 
-The license under which the Emlog software is released is the Free Software Foundation's GP Lv3 (or
-later): [LICENSE](/license.txt)
+The license under which the Emlog software is released is the Free Software Foundation's GP Lv3 (or later)：[LICENSE](/license.txt)

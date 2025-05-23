@@ -1,12 +1,14 @@
 <?php
+
 /**
  * curl wrapper class
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class EmCurl {
+class EmCurl
+{
     protected $_useragent = 'emlog ';
     protected $_url;
     protected $_followlocation = false;
@@ -20,37 +22,44 @@ class EmCurl {
     protected $_noBody;
     protected $_status;
     protected $_headers;
+    protected $_error;
 
     public $authentication = false;
     public $auth_name = '';
     public $auth_pass = '';
 
-    public function __construct($timeOut = 5, $includeHeader = false, $noBody = false) {
+    public function __construct($timeOut = 5, $includeHeader = false, $noBody = false)
+    {
         $this->_timeout = $timeOut; // second
         $this->_noBody = $noBody;
         $this->_includeHeader = $includeHeader;
     }
 
-    public function setPost($postFields) {
+    public function setPost($postFields)
+    {
         $this->_post = true;
         $this->_postFields = $postFields;
     }
 
-    public function request($url = 'nul') {
+    public function request($url = 'nul', $headers = array('Expect:'))
+    {
         if ($url !== 'nul') {
             $this->_url = $url;
         }
 
-        $s = curl_init();
+        if (!extension_loaded('curl')) {
+            emMsg(lang('need_curl_extension'));
+        }
 
+        $s = curl_init();
         curl_setopt($s, CURLOPT_URL, $this->_url);
-        curl_setopt($s, CURLOPT_HTTPHEADER, array('Expect:'));
+        curl_setopt($s, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($s, CURLOPT_TIMEOUT, $this->_timeout);
         curl_setopt($s, CURLOPT_MAXREDIRS, $this->_maxRedirects);
         curl_setopt($s, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($s, CURLOPT_FOLLOWLOCATION, $this->_followlocation);
-        curl_setopt($s, CURLOPT_SSL_VERIFYPEER, false); // Avoid SSL certificate check
-        curl_setopt($s, CURLOPT_SSL_VERIFYHOST, 0);     // Skip host verification
+        curl_setopt($s, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($s, CURLOPT_SSL_VERIFYHOST, 0);
 
         if ($this->authentication) {
             curl_setopt($s, CURLOPT_USERPWD, $this->auth_name . ':' . $this->auth_pass);
@@ -65,25 +74,30 @@ class EmCurl {
         if ($this->_noBody) {
             curl_setopt($s, CURLOPT_NOBODY, true);
         }
+
         curl_setopt($s, CURLOPT_USERAGENT, $this->_useragent . Option::EMLOG_VERSION);
         curl_setopt($s, CURLOPT_REFERER, $this->_referer);
 
         $this->_response = curl_exec($s);
         $this->_status = curl_getinfo($s, CURLINFO_HTTP_CODE);
         $this->_headers = substr($this->_response, 0, curl_getinfo($s, CURLINFO_HEADER_SIZE));
+        $this->_error = curl_error($s);
 
         curl_close($s);
     }
 
-    public function getHttpStatus() {
+    public function getHttpStatus()
+    {
         return $this->_status;
     }
 
-    public function getRespone() {
+    public function getRespone()
+    {
         return $this->_response;
     }
 
-    public function getHeader($head_title) {
+    public function getHeader($head_title)
+    {
         $header_arr = $this->headersToArray($this->_headers);
         if (isset($header_arr[$head_title])) {
             return $header_arr[$head_title];
@@ -91,7 +105,8 @@ class EmCurl {
         return '';
     }
 
-    public function headersToArray($str) {
+    public function headersToArray($str)
+    {
         $headers = [];
         $headersTmpArray = explode("\r\n", $str);
         foreach ($headersTmpArray as $iValue) {
@@ -102,5 +117,10 @@ class EmCurl {
             }
         }
         return $headers;
+    }
+
+    public function getError()
+    {
+        return $this->_error;
     }
 }

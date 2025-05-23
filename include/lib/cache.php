@@ -1,12 +1,14 @@
 <?php
+
 /**
  * Cache
  *
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Cache {
+class Cache
+{
 
     private $db;
     private static $instance;
@@ -25,11 +27,13 @@ class Cache {
     private $logsort_cache;
     private $logalias_cache;
 
-    protected function __construct() {
+    protected function __construct()
+    {
         $this->db = Database::getInstance();
     }
 
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (self::$instance == null) {
             self::$instance = new Cache();
         }
@@ -39,9 +43,10 @@ class Cache {
     /**
      * update cache
      *
-     * @param mixed $cacheMethodName cache name:'options', multi use array:['options', 'user'], Leave blank for update all
+     * @param mixed $cacheMethodName cache name：'options', multi use array：['options', 'user'], Leave blank for update all
      */
-    public function updateCache($cacheMethodName = null) {
+    public function updateCache($cacheMethodName = null)
+    {
         // update single cache
         if (is_string($cacheMethodName)) {
             $method = 'mc_' . $cacheMethodName;
@@ -71,40 +76,49 @@ class Cache {
         }
     }
 
-    public function updateArticleCache() {
+    public function updateArticleCache()
+    {
         $this->updateCache(['sta', 'tags', 'sort', 'newlog', 'record', 'logsort', 'logalias']);
     }
 
-    public function cacheWrite($cacheData, $cacheName) {
-        $cachefile = EMLOG_ROOT . '/content/cache/' . $cacheName . '.php';
+    public function cacheWrite($cacheData, $cacheName)
+    {
+        $cacheFile = EMLOG_ROOT . '/content/cache/' . $cacheName . '.php';
         $cacheData = "<?php exit;//" . $cacheData;
-        @ $fp = fopen($cachefile, 'wb') or emMsg(lang('cache_read_error'));
-        @ fwrite($fp, $cacheData) or emMsg(lang('cache_not_writable'));
-        $this->{$cacheName . '_cache'} = null;
-        fclose($fp);
-    }
 
-    public function readCache($cacheName) {
-        if ($this->{$cacheName . '_cache'} != null) {
-            return $this->{$cacheName . '_cache'};
+        if (!file_put_contents($cacheFile, $cacheData)) {
+            emMsg(lang('cache_not_writable'));
         }
 
-        $cachefile = EMLOG_ROOT . '/content/cache/' . $cacheName . '.php';
-        if (!is_file($cachefile) || filesize($cachefile) <= 0) {
+        $this->{$cacheName . '_cache'} = null;
+    }
+
+    public function readCache($cacheName)
+    {
+        $cacheProperty = $cacheName . '_cache';
+
+        if (!is_null($this->{$cacheProperty})) {
+            return $this->{$cacheProperty};
+        }
+
+        $cacheFile = EMLOG_ROOT . '/content/cache/' . $cacheName . '.php';
+
+        if (!is_file($cacheFile) || filesize($cacheFile) <= 0) {
             if (method_exists($this, 'mc_' . $cacheName)) {
                 $this->{'mc_' . $cacheName}();
             }
         }
-        if ($fp = fopen($cachefile, 'r')) {
-            $data = fread($fp, filesize($cachefile));
-            fclose($fp);
+
+        if ($cacheData = file_get_contents($cacheFile)) {
             clearstatcache();
-            $this->{$cacheName . '_cache'} = unserialize(str_replace("<?php exit;//", '', $data));
-            return $this->{$cacheName . '_cache'};
+            $prefixLen = 13; // Length of "<?php exit;//"
+            $this->{$cacheProperty} = unserialize(substr($cacheData, $prefixLen));
+            return $this->{$cacheProperty};
         }
     }
 
-    private function mc_options() {
+    private function mc_options()
+    {
         $options_cache = [];
         $res = $this->db->query("SELECT * FROM " . DB_PREFIX . "options");
         while ($row = $this->db->fetch_array($res)) {
@@ -117,7 +131,8 @@ class Cache {
         $this->cacheWrite($cacheData, 'options');
     }
 
-    private function mc_user() {
+    private function mc_user()
+    {
         $user_cache = [];
         $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "user ORDER BY uid ASC");
         while ($row = $this->db->fetch_array($query)) {
@@ -146,21 +161,30 @@ class Cache {
         $this->cacheWrite($cacheData, 'user');
     }
 
-    private function mc_sta() {
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "blog WHERE type='blog' AND hide='n' AND checked='y' ");
-        $log_num = $data['total'];
-
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "blog WHERE type='blog' AND hide='n' AND checked='n' ");
-        $check_num = $data['total'];
+    private function mc_sta()
+    {
+        $now = time();
+        $sql = "SELECT 
+        SUM(CASE WHEN type = 'blog' AND hide = 'n' AND checked = 'y' AND date <= $now THEN 1 ELSE 0 END) AS log_num,
+        SUM(CASE WHEN type = 'blog' AND hide = 'n' AND checked = 'n' THEN 1 ELSE 0 END) AS check_num 
+        FROM `" . DB_PREFIX . "blog`";
+        $data = $this->db->once_fetch_array($sql);
+        $log_num = $data['log_num'];
+        $check_num = $data['check_num'];
 
         $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "twitter");
         $note_num = $data['total'];
 
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "comment WHERE hide='n' ");
-        $com_num = $data['total'];
+        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "like");
+        $like_num = $data['total'];
 
-        $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "comment WHERE hide='y' ");
-        $hide_com_num = $data['total'];
+        $sql = "SELECT 
+        SUM(CASE WHEN hide = 'n' THEN 1 ELSE 0 END) AS com_num,
+        SUM(CASE WHEN hide = 'y' THEN 1 ELSE 0 END) AS hide_com_num 
+        FROM " . DB_PREFIX . "comment";
+        $data = $this->db->once_fetch_array($sql);
+        $com_num = $data['com_num'] ? $data['com_num'] : 0;
+        $hide_com_num = $data['hide_com_num'] ? $data['hide_com_num'] : 0;
 
         $sta_cache = [
             'lognum'     => $log_num,
@@ -170,6 +194,7 @@ class Cache {
             'hidecomnum' => $hide_com_num,
             'checknum'   => $check_num,
             'note_num'   => $note_num,
+            'like_num'   => $like_num,
         ];
 
         // Performance issues only cache the information of the last 1000 users
@@ -196,7 +221,8 @@ class Cache {
         $this->cacheWrite($cacheData, 'sta');
     }
 
-    private function mc_comment() {
+    private function mc_comment()
+    {
         $query = $this->db->query("SELECT option_value,option_name FROM " . DB_PREFIX . "options WHERE option_name IN('index_comnum','comment_subnum','comment_paging','comment_pnum','comment_order')");
         while ($row = $this->db->fetch_array($query)) {
             ${$row['option_name']} = $row['option_value'];
@@ -239,16 +265,17 @@ class Cache {
         $this->cacheWrite($cacheData, 'comment');
     }
 
-    private function mc_tags() {
+    private function mc_tags()
+    {
         $tag_cache = [];
-        $tagnum = 100;
+        $tagnum = 50;
         $maxuse = 20;
         $minuse = 0;
         $spread = (min($tagnum, 12));
         $rank = $maxuse - $minuse;
         $rank = ($rank == 0 ? 1 : $rank);
         $rank = $spread / $rank;
-        $query = $this->db->query("SELECT tagname,gid FROM " . DB_PREFIX . "tag order by tid desc limit 100");
+        $query = $this->db->query("SELECT tagname,gid FROM " . DB_PREFIX . "tag order by tid desc limit $tagnum");
         while ($row = $this->db->fetch_array($query)) {
             if ($row['gid'] == ',') {
                 continue;
@@ -258,7 +285,7 @@ class Cache {
             $tag_cache[] = [
                 'tagurl'   => urlencode($row['tagname']),
                 'tagname'  => htmlspecialchars($row['tagname']),
-                'fontsize' => min($fontsize, 22),//max fontsize:22pt,
+                'fontsize' => min($fontsize, 22), //max fontsize:22pt,
                 'usenum'   => $usenum
             ];
         }
@@ -266,40 +293,23 @@ class Cache {
         $this->cacheWrite($cacheData, 'tags');
     }
 
-    private function mc_sort() {
-        $sort_cache = [];
-        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "sort ORDER BY pid ASC,taxis ASC");
-        while ($row = $this->db->fetch_array($query)) {
-            $data = $this->db->once_fetch_array("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "blog WHERE sortid=" . $row['sid'] . " AND hide='n' AND checked='y' AND type='blog'");
-            $logNum = $data['total'];
-            $sortData = array(
-                'lognum'      => $logNum,
-                'sortname'    => htmlspecialchars($row['sortname']),
-                'description' => htmlspecialchars($row['description']),
-                'alias'       => $row['alias'],
-                'sid'         => (int)$row['sid'],
-                'taxis'       => (int)$row['taxis'],
-                'pid'         => (int)$row['pid'],
-                'template'    => htmlspecialchars($row['template']),
-            );
-            if ($sortData['pid'] == 0) {
-                $sortData['children'] = [];
-            } elseif (isset($sort_cache[$row['pid']])) {
-                $sort_cache[$row['pid']]['children'][] = $row['sid'];
-            }
-            $sort_cache[$row['sid']] = $sortData;
-        }
+    private function mc_sort()
+    {
+        $Sort_Model = new Sort_Model();
+        $sort_cache = $Sort_Model->getSorts();
         $cacheData = serialize($sort_cache);
         $this->cacheWrite($cacheData, 'sort');
     }
 
-    private function mc_link() {
+    private function mc_link()
+    {
         $link_cache = [];
-        $query = $this->db->query("SELECT siteurl,sitename,description FROM " . DB_PREFIX . "link WHERE hide='n' ORDER BY taxis ASC");
+        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "link WHERE hide='n' ORDER BY taxis ASC");
         while ($show_link = $this->db->fetch_array($query)) {
             $link_cache[] = array(
                 'link' => htmlspecialchars($show_link['sitename']),
                 'url'  => htmlspecialchars($show_link['siteurl']),
+                'icon' => htmlspecialchars($show_link['icon']),
                 'des'  => htmlspecialchars($show_link['description'])
             );
         }
@@ -307,7 +317,8 @@ class Cache {
         $this->cacheWrite($cacheData, 'link');
     }
 
-    private function mc_navi() {
+    private function mc_navi()
+    {
         $navi_cache = [];
         $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "navi WHERE hide='n' ORDER BY pid ASC, taxis ASC");
         $sorts = $this->readCache('sort');
@@ -346,40 +357,43 @@ class Cache {
         $this->cacheWrite($cacheData, 'navi');
     }
 
-    private function mc_newlog() {
+    private function mc_newlog()
+    {
         $index_newlognum = Option::get('index_newlognum');
         if ($index_newlognum <= 0) {
             $index_newlognum = 10;
         }
         $now = time();
         $date_state = "and date<=$now";
-        $sql = "SELECT gid,title FROM " . DB_PREFIX . "blog WHERE hide='n' and checked='y' and type='blog' $date_state ORDER BY date DESC LIMIT 0, $index_newlognum";
+        $sql = "SELECT gid,title,cover,views,comnum,date FROM " . DB_PREFIX . "blog WHERE hide='n' and checked='y' and type='blog' $date_state ORDER BY date DESC LIMIT 0, $index_newlognum";
         $res = $this->db->query($sql);
         $logs = [];
         while ($row = $this->db->fetch_array($res)) {
             $row['gid'] = (int)$row['gid'];
             $row['title'] = htmlspecialchars($row['title']);
+            $row['cover'] = $row['cover'] ? getFileUrl($row['cover']) : '';
             $logs[] = $row;
         }
         $cacheData = serialize($logs);
         $this->cacheWrite($cacheData, 'newlog');
     }
 
-    private function mc_record() {
-/*vot*/        $query = $this->db->query('SELECT date FROM ' . DB_PREFIX . "blog WHERE hide='n' AND checked='y' AND type='blog' ORDER BY date DESC");
+    private function mc_record()
+    {
+        $query = $this->db->query('select date from ' . DB_PREFIX . "blog WHERE hide='n' and checked='y' and type='blog' ORDER BY date DESC");
         $record = 'xxxx_x';
         $p = 0;
         $lognum = 1;
         $record_cache = [];
         while ($show_record = $this->db->fetch_array($query)) {
-/*vot*/            $f_record = gmdate('Y_m', $show_record['date']);
+            $f_record = gmdate('Y_n', $show_record['date']);
             if ($record != $f_record) {
                 $h = $p - 1;
                 if ($h != -1) {
                     $record_cache[$h]['lognum'] = $lognum;
                 }
                 $record_cache[$p] = array(
-/*vot*/                    'record' => gmdate('Y-m', $show_record['date']),
+                    'record' => gmdate('Y年n月', $show_record['date']),
                     'date'   => gmdate('Ym', $show_record['date'])
                 );
                 $p++;
@@ -399,7 +413,8 @@ class Cache {
         $this->cacheWrite($cacheData, 'record');
     }
 
-    private function mc_logalias() {
+    private function mc_logalias()
+    {
         $sql = "SELECT gid,alias FROM " . DB_PREFIX . "blog where alias!=''";
         $query = $this->db->query($sql);
         $log_cache_alias = [];
@@ -413,7 +428,8 @@ class Cache {
     /**
      * Post Tag Cache [Deprecated]
      */
-    private function mc_logtags() {
+    private function mc_logtags()
+    {
         $cacheData = serialize([]);
         $this->cacheWrite($cacheData, 'logtags');
     }
@@ -421,7 +437,8 @@ class Cache {
     /**
      * Consider performance issues and only cache the classification information of the first 200 articles
      */
-    private function mc_logsort() {
+    private function mc_logsort()
+    {
         $sql = "SELECT gid,sortid FROM " . DB_PREFIX . "blog where type='blog' order by top DESC, sortop DESC, date DESC LIMIT 200";
         $query = $this->db->query($sql);
         $log_cache_sort = [];

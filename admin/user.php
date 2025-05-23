@@ -1,8 +1,9 @@
 <?php
+
 /**
  * user
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -17,6 +18,8 @@ $User_Model = new User_Model();
 if (empty($action)) {
     $page = Input::getIntVar('page', 1);
     $keyword = Input::getStrVar('keyword');
+    $order = Input::getStrVar('order');
+    $perpage_num = Input::getIntVar('perpage_num');
 
     $email = $nickname = '';
     if (filter_var($keyword, FILTER_VALIDATE_EMAIL)) {
@@ -25,9 +28,25 @@ if (empty($action)) {
         $nickname = $keyword;
     }
 
-    $users = $User_Model->getUsers($email, $nickname, $page);
-    $usernum = $User_Model->getUserNum($email, $nickname);
-    $pageurl = pagination($usernum, Option::get('admin_perpage_num'), $page, "./user.php?page=");
+    if ($perpage_num > 0) {
+        $perPage = $perpage_num;
+        Option::updateOption('admin_user_perpage_num', $perpage_num);
+        $CACHE->updateCache('options');
+    } else {
+        $admin_user_perpage_num = Option::get('admin_user_perpage_num');
+        $perPage = $admin_user_perpage_num ? $admin_user_perpage_num : 20;
+    }
+
+    $users = $User_Model->getUsers($email, $nickname, $order, $page, $perPage);
+    $userCount = $User_Model->getUserCount($email, $nickname);
+
+    $subPage = '';
+    foreach ($_GET as $key => $val) {
+        if (in_array($key, ['keyword', 'order', 'perpage_num'])) {
+            $subPage .= "&$key=$val";
+        }
+    }
+    $pageurl = pagination($userCount, $perPage, $page, "user.php?{$subPage}&page=");
 
     include View::getAdmView('header');
     require_once View::getAdmView('user');
@@ -36,10 +55,10 @@ if (empty($action)) {
 }
 
 if ($action == 'new') {
-    $email = isset($_POST['email']) ? addslashes(trim($_POST['email'])) : '';
-    $password = isset($_POST['password']) ? addslashes(trim($_POST['password'])) : '';
-    $password2 = isset($_POST['password2']) ? addslashes(trim($_POST['password2'])) : '';
-    $role = isset($_POST['role']) ? addslashes(trim($_POST['role'])) : self::ROLE_WRITER;
+    $email = Input::postStrVar('email');
+    $password = Input::postStrVar('password');
+    $password2 = Input::postStrVar('password2');
+    $role = Input::postStrVar('role', User::ROLE_WRITER);
 
     LoginAuth::checkToken();
 
@@ -69,7 +88,7 @@ if ($action == 'new') {
 }
 
 if ($action == 'edit') {
-    $uid = isset($_GET['uid']) ? (int)$_GET['uid'] : '';
+    $uid = Input::getIntVar('uid');
 
     $data = $User_Model->getOneUser($uid);
 
@@ -80,7 +99,7 @@ if ($action == 'edit') {
     $email = $data['email'];
 
     $ex1 = $ex2 = $ex3 = '';
-    if (user::isVistor($role)) {
+    if (user::isVisitor($role)) {
         $ex1 = 'selected="selected"';
     } elseif (User::isEditor($role)) {
         $ex2 = 'selected="selected"';
@@ -95,34 +114,34 @@ if ($action == 'edit') {
 }
 
 if ($action == 'update') {
-    $login = isset($_POST['username']) ? addslashes(trim($_POST['username'])) : '';
-    $nickname = isset($_POST['nickname']) ? addslashes(trim($_POST['nickname'])) : '';
-    $password = isset($_POST['password']) ? addslashes(trim($_POST['password'])) : '';
-    $password2 = isset($_POST['password2']) ? addslashes(trim($_POST['password2'])) : '';
-    $email = isset($_POST['email']) ? addslashes(trim($_POST['email'])) : '';
-    $description = isset($_POST['description']) ? addslashes(trim($_POST['description'])) : '';
-    $role = isset($_POST['role']) ? addslashes(trim($_POST['role'])) : User::ROLE_WRITER;
-    $uid = isset($_POST['uid']) ? (int)$_POST['uid'] : '';
+    $username = Input::postStrVar('username');
+    $nickname = Input::postStrVar('nickname');
+    $password = Input::postStrVar('password');
+    $password2 = Input::postStrVar('password2');
+    $email = Input::postStrVar('email');
+    $description = Input::postStrVar('description');
+    $role = Input::postStrVar('role', User::ROLE_WRITER);
+    $uid = Input::postIntVar('uid');
 
     LoginAuth::checkToken();
 
-    if (UID == $uid) {
-        emDirect('./user.php');
-    }
     //Founder account can not be edited by others
-    if ($uid == 1) {
+    if (!User::isFounder() && $uid === 1) {
         emDirect('./user.php?error_del_b=1');
+    }
+    if ($uid === 1) {
+        $role = User::ROLE_ADMIN;
     }
     if (empty($nickname)) {
         emDirect("./user.php?action=edit&uid={$uid}&error_nickname=1");
     }
-    if (empty($email)) {
+    if (empty($email) && empty($username)) {
         emDirect("./user.php?action=edit&uid={$uid}&error_email=1");
     }
     if ($User_Model->isMailExist($email, $uid)) {
         emDirect("./user.php?action=edit&uid={$uid}&error_exist_email=1");
     }
-    if ($User_Model->isUserExist($login, $uid)) {
+    if ($User_Model->isUserExist($username, $uid)) {
         emDirect("./user.php?action=edit&uid={$uid}&error_exist=1");
     }
     if (strlen($password) > 0 && strlen($password) < 6) {
@@ -133,7 +152,7 @@ if ($action == 'update') {
     }
 
     $userData = [
-        'username'    => $login,
+        'username'    => $username,
         'nickname'    => $nickname,
         'email'       => $email,
         'description' => $description,
@@ -153,7 +172,7 @@ if ($action == 'update') {
 
 if ($action == 'del') {
     LoginAuth::checkToken();
-    $uid = isset($_GET['uid']) ? (int)$_GET['uid'] : '';
+    $uid = Input::getIntVar('uid');
 
     if (UID == $uid) {
         emDirect('./user.php');
@@ -166,12 +185,13 @@ if ($action == 'del') {
 
     $User_Model->deleteUser($uid);
     $CACHE->updateCache(array('sta', 'user'));
-    emDirect('./user.php?active_del=1');
+    doAction('delete_user', $uid);
+    emDirect('./user.php');
 }
 
 if ($action == 'forbid') {
     LoginAuth::checkToken();
-    $uid = isset($_GET['uid']) ? (int)$_GET['uid'] : '';
+    $uid = Input::getIntVar('uid');
 
     if (UID == $uid) {
         emDirect('./user.php');
@@ -183,13 +203,45 @@ if ($action == 'forbid') {
     }
 
     $User_Model->forbidUser($uid);
-    emDirect('./user.php?active_fb=1');
+    emDirect('./user.php');
 }
 
 if ($action == 'unforbid') {
     LoginAuth::checkToken();
-    $uid = isset($_GET['uid']) ? (int)$_GET['uid'] : '';
+    $uid = Input::getIntVar('uid');
 
     $User_Model->unforbidUser($uid);
     emDirect('./user.php?active_unfb=1');
+}
+
+if ($action == 'operate_user') {
+    $operate = Input::requestStrVar('operate');
+    $user_ids = Input::postIntArray('user_ids');
+
+    if (!$operate) {
+        emDirect("./user.php");
+    }
+    if (empty($user_ids)) {
+        emDirect("./user.php");
+    }
+
+    if ($operate == 'forbid') {
+        foreach ($user_ids as $id) {
+            if ($id == 1) {
+                continue;
+            }
+            $User_Model->forbidUser($id);
+        }
+        emDirect('./user.php');
+    }
+
+    if ($operate == 'unforbid') {
+        foreach ($user_ids as $id) {
+            if ($id == 1) {
+                continue;
+            }
+            $User_Model->unforbidUser($id);
+        }
+        emDirect('./user.php');
+    }
 }

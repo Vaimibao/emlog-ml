@@ -1,8 +1,9 @@
 <?php
+
 /**
  * templates
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -12,11 +13,12 @@
 
 require_once 'globals.php';
 
+$Template_Model = new Template_Model();
+
 if ($action === '') {
     $nonce_template = Option::get('nonce_templet');
     $nonce_template_data = @file(TPLS_PATH . $nonce_template . '/header.php');
 
-    $Template_Model = new Template_Model();
     $templates = $Template_Model->getTemplates();
 
     include View::getAdmView('header');
@@ -27,21 +29,25 @@ if ($action === '') {
 
 if ($action === 'use') {
     LoginAuth::checkToken();
-    $tplName = isset($_GET['tpl']) ? addslashes($_GET['tpl']) : '';
+    $tplName = Input::getStrVar('tpl');
 
     Option::updateOption('nonce_templet', $tplName);
     $CACHE->updateCache('options');
+    $Template_Model->initCallback($tplName);
+
     emDirect("./template.php?activated=1");
 }
 
 if ($action === 'del') {
     LoginAuth::checkToken();
-    $tplName = isset($_GET['tpl']) ? addslashes($_GET['tpl']) : '';
+    $tplName = Input::getStrVar('tpl');
 
     $nonce_templet = Option::get('nonce_templet');
     if ($tplName === $nonce_templet) {
         emMsg(lang('template_used'));
     }
+
+    $Template_Model->rmCallback($tplName);
 
     $path = preg_replace("/^([\w-]+)$/i", "$1", $tplName);
     if ($path && true === emDeleteFile(TPLS_PATH . $path)) {
@@ -59,6 +65,9 @@ if ($action === 'install') {
 }
 
 if ($action === 'upload_zip') {
+    if (defined('APP_UPLOAD_FORBID') && APP_UPLOAD_FORBID === true) {
+        emMsg(lang('system_prohibits_uploading'));
+    }
     LoginAuth::checkToken();
     $zipfile = isset($_FILES['tplzip']) ? $_FILES['tplzip'] : '';
 
@@ -69,7 +78,7 @@ if ($action === 'upload_zip') {
         emDirect("./template.php?error_f=1");
     }
     if (!$zipfile || $zipfile['error'] > 0 || empty($zipfile['tmp_name'])) {
-/*vot*/        emMsg('template_upload_failed') . $zipfile['error'];
+        emMsg(lang('template_upload_failed') . $zipfile['error']);
     }
     if (getFileSuffix($zipfile['name']) != 'zip') {
         emDirect("./template.php?error_a=1");
@@ -94,7 +103,7 @@ if ($action === 'upload_zip') {
 }
 
 if ($action === 'check_update') {
-    $templates = isset($_POST['templates']) ? $_POST['templates'] : [];
+    $templates = Input::postStrArray('templates', []);
 
     $emcurl = new EmCurl();
     $post_data = [
@@ -102,49 +111,48 @@ if ($action === 'check_update') {
         'apps'  => json_encode($templates),
     ];
     $emcurl->setPost($post_data);
-    $emcurl->request('https://emlog.in/template/upgrade');
+    $emcurl->request('https://store.emlog.net/template/upgrade');
     $retStatus = $emcurl->getHttpStatus();
     if ($retStatus !== MSGCODE_SUCCESS) {
-/*vot*/        Output::error(lang('update_failed_network'));
+        Output::error(lang('update_failed_network'));
     }
     $response = $emcurl->getRespone();
     $ret = json_decode($response, 1);
     if (empty($ret)) {
-/*vot*/        Output::error(lang('update_failed_network'));
+        Output::error(lang('update_failed_network'));
     }
     if ($ret['code'] === MSGCODE_EMKEY_INVALID) {
-/*vot*/        Output::error(lang('pro_unregistered'));
+        Output::error(lang('pro_unregistered'));
     }
 
     Output::ok($ret['data']);
 }
 
 if ($action === 'upgrade') {
-    $alias = isset($_GET['alias']) ? trim($_GET['alias']) : '';
+    $alias = Input::getStrVar('alias');
 
     if (!Register::isRegLocal()) {
-        emDirect("./template.php?error_i=1");
+        Output::error(lang('pro_unregistered_tip'), 200);
     }
 
-    $temp_file = emFetchFile('https://emlog.in/template/down/' . $alias);
+    $temp_file = emFetchFile('https://www.emlog.net/template/down/' . $alias);
     if (!$temp_file) {
-        emDirect("./template.php?error_h=1");
+        Output::error(lang('unable_to_download_update'), 200);
     }
     $unzip_path = '../content/templates/';
     $ret = emUnZip($temp_file, $unzip_path, 'tpl');
     @unlink($temp_file);
     switch ($ret) {
         case 0:
-            emDirect("./template.php?activate_upgrade=1");
+            $Template_Model->upCallback($alias);
+            Output::ok();
             break;
         case 1:
         case 2:
-            emDirect("./template.php?error_b=1");
+            Output::error(lang('update_failed_nonwritable'), 200);
             break;
         case 3:
-            emDirect("./template.php?error_d=1");
-            break;
         default:
-            emDirect("./template.php?error_e=1");
+            Output::error(lang('update_package_exception'), 200);
     }
 }

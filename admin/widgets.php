@@ -1,8 +1,9 @@
 <?php
+
 /**
  * Widgets
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -53,29 +54,33 @@ if ($action === 'setwg') {
 
     switch ($widget) {
         case 'newcomm':
-            $index_comnum = isset($_POST['index_comnum']) ? (int)$_POST['index_comnum'] : 10;
-            $comment_subnum = isset($_POST['comment_subnum']) ? (int)$_POST['comment_subnum'] : 20;
+            $index_comnum = Input::postIntVar('index_comnum', 10);
+            $comment_subnum = Input::postIntVar('comment_subnum', 20);
             Option::updateOption('index_comnum', $index_comnum);
             Option::updateOption('comment_subnum', $comment_subnum);
             $CACHE->updateCache('comment');
             break;
+        case 'twitter':
+            $index_newtwnum = Input::postIntVar('index_newtwnum', 10);
+            Option::updateOption('index_newtwnum', $index_newtwnum);
+            break;
         case 'newlog':
-            $index_newlog = isset($_POST['index_newlog']) ? (int)$_POST['index_newlog'] : 5;
+            $index_newlog = Input::postIntVar('index_newlog', 5);
             Option::updateOption('index_newlognum', $index_newlog);
             $CACHE->updateCache('newlog');
             break;
         case 'hotlog':
-            $index_hotlognum = isset($_POST['index_hotlognum']) ? (int)$_POST['index_hotlognum'] : 5;
+            $index_hotlognum = Input::postIntVar('index_hotlognum', 5);
             Option::updateOption('index_hotlognum', $index_hotlognum);
             break;
         case 'custom_text':
             $custom_widget = Option::get('custom_widget');
             $title = isset($_POST['title']) ? $_POST['title'] : '';
             $content = isset($_POST['content']) ? $_POST['content'] : '';
-            $custom_wg_id = isset($_POST['custom_wg_id']) ? $_POST['custom_wg_id'] : '';//Edit widget id
+            $custom_wg_id = isset($_POST['custom_wg_id']) ? $_POST['custom_wg_id'] : ''; //Component id to modify
             $new_title = isset($_POST['new_title']) ? $_POST['new_title'] : '';
             $new_content = isset($_POST['new_content']) ? $_POST['new_content'] : '';
-            $rmwg = isset($_GET['rmwg']) ? addslashes($_GET['rmwg']) : '';//Delete widget id
+            $rmwg = isset($_GET['rmwg']) ? addslashes($_GET['rmwg']) : ''; //Component id to delete
             //Add a new custom widget
             if ($new_content) {
                 //Determine the widget index
@@ -138,5 +143,5 @@ if ($action === 'reset') {
     Option::updateOption("widgets1", $default_widget);
 
     $CACHE->updateCache('options');
-    emDirect("./widgets.php?activated=1");
+    emDirect("./widgets.php");
 }

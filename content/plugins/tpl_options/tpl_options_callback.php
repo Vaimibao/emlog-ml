@@ -2,7 +2,7 @@
 /*
 Plugin Name: Template options plugin
 */
-!defined('EMLOG_ROOT') && exit('access deined!');
+defined('EMLOG_ROOT') || exit('access denied!');
 
 if (!class_exists('TplOptions', false)) {
     include __DIR__ . '/tpl_options.php';
@@ -12,9 +12,7 @@ if (!class_exists('TplOptions', false)) {
 function callback_init() {
     $tplOptions = TplOptions::getInstance();
     $table = $tplOptions->getTable('data');
-    $charset = 'utf8mb4';
-    $type = 'InnoDB';
-    $add = $tplOptions->getDb()->getMysqlVersion() > '4.1' ? "ENGINE=$type DEFAULT CHARSET=$charset;" : "TYPE=$type;";
+    $add = "DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
     $sql = "
     CREATE TABLE IF NOT EXISTS `$table` (
         `id` int(11) unsigned NOT NULL AUTO_INCREMENT,

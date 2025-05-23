@@ -1,16 +1,19 @@
 <?php
+
 /**
  * plugin model
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
-class Plugin_Model {
+class Plugin_Model
+{
 
     /**
      * start plug-in
      */
-    public function activePlugin($plugin) {
+    public function activePlugin($plugin)
+    {
         $active_plugins = Option::get('active_plugins');
 
         $ret = false;
@@ -40,7 +43,8 @@ class Plugin_Model {
     /**
      * stop plug-in
      */
-    public function inactivePlugin($plugin) {
+    public function inactivePlugin($plugin)
+    {
         $active_plugins = Option::get('active_plugins');
         if (in_array($plugin, $active_plugins)) {
             $key = array_search($plugin, $active_plugins);
@@ -52,7 +56,8 @@ class Plugin_Model {
         Option::updateOption('active_plugins', $active_plugins);
     }
 
-    public function rmCallback($plugin) {
+    public function rmCallback($plugin)
+    {
         $r = explode('/', $plugin, 2);
         $plugin = $r[0];
         $callback_file = "../content/plugins/$plugin/{$plugin}_callback.php";
@@ -65,7 +70,8 @@ class Plugin_Model {
     }
 
     // upgrade callback
-    public function upCallback($plugin_alias) {
+    public function upCallback($plugin_alias)
+    {
         $callback_file = "../content/plugins/$plugin_alias/{$plugin_alias}_callback.php";
         if (file_exists($callback_file)) {
             require_once $callback_file;
@@ -75,7 +81,8 @@ class Plugin_Model {
         }
     }
 
-    function getPlugins() {
+    function getPlugins($filter = '')
+    {
         global $emPlugins;
         if (isset($emPlugins)) {
             return $emPlugins;
@@ -83,7 +90,7 @@ class Plugin_Model {
         $emPlugins = [];
         $pluginFiles = [];
         $pluginPath = EMLOG_ROOT . '/content/plugins';
-        $pluginDir = @ dir($pluginPath);
+        $pluginDir = @dir($pluginPath);
         if (!$pluginDir) {
             return $emPlugins;
         }
@@ -93,14 +100,23 @@ class Plugin_Model {
                 continue;
             }
             if (is_dir($pluginPath . '/' . $file)) {
-                $pluginsSubDir = @ dir($pluginPath . '/' . $file);
+                $pluginsSubDir = @dir($pluginPath . '/' . $file);
                 if ($pluginsSubDir) {
                     while (($subFile = $pluginsSubDir->read()) !== false) {
                         if (preg_match('|^\.+$|', $subFile)) {
                             continue;
                         }
                         if ($subFile == $file . '.php') {
-                            $pluginFiles[] = "$file/$subFile";
+                            $filePath = $pluginPath . '/' . $file;
+                            $fileLastModified = filemtime($filePath);
+                            if (in_array($file, ['tips', 'tpl_options'])) { //防止更新带来文件时间变更，默认插件排序始终靠后。
+                                $fileLastModified = 0;
+                            }
+                            $pluginFiles[] = [
+                                'file'          => $file . '/' . $subFile,
+                                'last_modified' => $fileLastModified,
+                                'preview'       => file_exists(PLUGIN_PATH . $file . '/preview.jpg') ? PLUGIN_URL . $file . '/preview.jpg' : './views/images/plugin-icon.png',
+                            ];
                         }
                     }
                 }
@@ -112,18 +128,35 @@ class Plugin_Model {
 
         $active_plugins = Option::get('active_plugins');
         foreach ($pluginFiles as $plugin) {
-            $pluginData = $this->getPluginData($plugin);
+            $active = in_array($plugin['file'], $active_plugins) ? 1 : 0;
+            if ($filter == 'on' && !$active) {
+                continue;
+            }
+            if ($filter == 'off' && $active) {
+                continue;
+            }
+            $pluginData = $this->getPluginData($plugin['file']);
             if (empty($pluginData['Name'])) {
                 continue;
             }
-            $pluginData['active'] = in_array($plugin, $active_plugins) ? 1 : 0;
-            $emPlugins[$plugin] = $pluginData;
+            $pluginData['active'] = $active;
+            $pluginData['alias'] = $plugin['file'];
+            $pluginData['last_modified'] = $plugin['last_modified'];
+            $pluginData['preview'] = $plugin['preview'];
+            $emPlugins[] = $pluginData;
         }
-        uasort($emPlugins, array("self", "sortByActive"));
+
+        // Sort plugins by last modified time
+        usort($emPlugins, function ($a, $b) {
+            return $b['last_modified'] - $a['last_modified'];
+        });
+
         return $emPlugins;
     }
 
-    function getPluginData($pluginFile) {
+
+    function getPluginData($pluginFile)
+    {
         $pluginPath = EMLOG_ROOT . '/content/plugins/';
         $content = file($pluginPath . $pluginFile);
         if (!$content) {
@@ -134,7 +167,6 @@ class Plugin_Model {
         preg_match("/Version:(.*)/i", $pluginData, $version);
         preg_match("/Plugin URL:(.*)/i", $pluginData, $plugin_url);
         preg_match("/Description:(.*)/i", $pluginData, $description);
-        preg_match("/ForEmlog:(.*)/i", $pluginData, $emlog_version);
         preg_match("/Author:(.*)/i", $pluginData, $author_name);
         preg_match("/Author URL:(.*)/i", $pluginData, $author_url);
 
@@ -147,8 +179,7 @@ class Plugin_Model {
         $version = isset($version[1]) ? strip_tags(trim($version[1])) : '';
         $description = isset($description[1]) ? strip_tags(trim($description[1])) : '';
         $plugin_url = isset($plugin_url[1]) ? strip_tags(trim($plugin_url[1])) : '';
-        $author = isset($author_name[1]) ? strip_tags(trim($author_name[1])) : '';
-        $emlog_version = isset($emlog_version[1]) ? strip_tags(trim($emlog_version[1])) : '';
+        $author = isset($author_name[1]) ? strip_tags(trim($author_name[1])) : '未知';
         $author_url = isset($author_url[1]) ? strip_tags(trim($author_url[1])) : '';
 
         return [
@@ -157,17 +188,9 @@ class Plugin_Model {
             'Description' => $description,
             'Url'         => $plugin_url,
             'Author'      => $author,
-            'ForEmlog'    => $emlog_version,
             'AuthorUrl'   => $author_url,
             'Setting'     => $have_setting,
             'Plugin'      => $plugin,
         ];
-    }
-
-    public static function sortByActive($a, $b) {
-        if ($a['active'] === $b['active']) {
-            return 0;
-        }
-        return ($a['active'] > $b['active']) ? -1 : 1;
     }
 }

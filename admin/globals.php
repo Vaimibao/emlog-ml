@@ -1,8 +1,9 @@
 <?php
+
 /**
  * global
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -16,7 +17,8 @@ load_language('admin');
 
 $sta_cache = $CACHE->readCache('sta');
 $user_cache = $CACHE->readCache('user');
-$action = isset($_GET['action']) ? addslashes($_GET['action']) : '';
+$action = Input::getStrVar('action');
+$shortcuts = Shortcut::getActive();
 
 loginAuth::checkLogin();
 User::checkRolePermission();

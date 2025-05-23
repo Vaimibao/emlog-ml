@@ -1,8 +1,9 @@
 <?php
+
 /**
  * control panel
  * @package EMLOG
- * @link https://emlog.in
+ * @link https://www.emlog.net
  */
 
 /**
@@ -20,17 +21,31 @@ if (empty($action)) {
     // server info
     $server_app = $_SERVER['SERVER_SOFTWARE'];
     $DB = Database::getInstance();
-    $mysql_ver = $DB->getMysqlVersion();
+    $mysql_ver = $DB->getVersion();
+    // Detection database drive type
+    $db_driver = '';
+    if ($DB instanceof MySqlii) {
+        $db_driver = 'MySQLi ';
+    } elseif ($DB instanceof DatabasePDO) {
+        $db_driver = 'PDO';
+    }
+    if ($db_driver) {
+        $mysql_ver .= ' (' . $db_driver . ')';
+    }
     $max_execution_time = ini_get('max_execution_time') ?: '';
     $max_upload_size = ini_get('upload_max_filesize') ?: '';
     $php_ver = PHP_VERSION . ', ' . $max_execution_time . 's,' . $max_upload_size;
+    $os = php_uname('s') . ' ' . php_uname('m');
     $role_name = User::getRoleName($role, UID);
-    if (function_exists('curl_init')) {
+    if (extension_loaded('curl')) {
         $c = curl_version();
-/*vot*/ $php_ver .= ', curl' . $c['version'];
+        $php_ver .= ',curl';
     }
     if (class_exists('ZipArchive', false)) {
         $php_ver .= ',zip';
+    }
+    if (extension_loaded('gd')) {
+        $php_ver .= ',gd';
     }
 
     if (User::haveEditPermission()) {
@@ -48,11 +63,31 @@ if (empty($action)) {
     $article_amount = $Log_Model->getCount();
     $note_amount = $Note_Model->getCount();
     $comment_amount = $Comment_Model->getCommentNum();
-    $logs = $Log_Model->getLogsForAdmin();
-    $comments = $Comment_Model->getCommentsForAdmin();
+    $logs = $Log_Model->getLogsForAdmin(' ORDER BY date DESC', 'n', 1, 'blog', 5);
+    $comments = $Comment_Model->getCommentsForAdmin(0, 0, null, 1, 5);
 
-    include View::getAdmView('header');
-    require_once(View::getAdmView('index_user'));
-    include View::getAdmView('footer');
+    include View::getAdmView('uc_header');
+    require_once(View::getAdmView('uc_index'));
+    include View::getAdmView('uc_footer');
     View::output();
+}
+
+if ($action === 'get_all_shortcuts') {
+    $allShortcus = Shortcut::getAll();
+    Output::ok($allShortcus);
+}
+
+if ($action === 'add_shortcut') {
+    $shortcut = Input::postStrArray('shortcut');
+    $shortcutSet = [];
+    foreach ($shortcut as $item) {
+        $item = explode('||', $item);
+        $shortcutSet[] = [
+            'name' => $item[0],
+            'url'  => $item[1]
+        ];
+    }
+    Option::updateOption('shortcut', json_encode($shortcutSet, JSON_UNESCAPED_UNICODE));
+    $CACHE->updateCache('options');
+    emDirect("./index.php?add_shortcut_suc=1");
 }
