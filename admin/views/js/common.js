@@ -708,3 +708,44 @@ function emlog_msg(type, info, closeTime = 1500, autoClose = true, closeButton =
         Qmsg[type](info);
     }
 }
+
+// SB Admin 2 Sidebar Features
+$(document).ready(function(){
+
+    var sd_tog;
+    var menu_id = ['#menu_content','#menu_sys','#menu_view','#menu_ext']; //ID names of all secondary menus to be operated
+
+    if($(window).width() < 768){ //Judge whether it is in small screen state
+        for(let i = 0; i < menu_id.length; i++){
+            if($(menu_id[i]).hasClass("show")){
+                $(menu_id[i]).addClass("sd_menu_hd");
+            }
+        }
+        $(".sidebar").toggleClass("sd-hidden");
+    }else{
+        var wrapper_height = $(".navbar-nav").outerHeight();
+        $("#content-wrapper").css("min-height",wrapper_height+"px");
+
+        setInterval(function(){  // When the menu height exceeds the browser height, add a scroll bar
+            if($('#accordionSidebar').outerHeight() > $(window).height()){
+                $('#accordionSidebar').css('height','100vh').css('overflow-x','hidden');
+            }
+        },300);
+    }
+    sd_tog = false;
+    $("#menu_category_content").click(function(){ //Click to open the sidebar key
+        if($(window).width() < 768){
+            for(let i = 0; i < menu_id.length; i++){
+                if($(menu_id[i]).hasClass("sd_menu_hd")){
+                    $(menu_id[i]).removeClass("sd_menu_hd");
+                }
+            }
+        }
+    });
+    $("#sidebarToggleTop").click(function(){     //Click the sidebar key submenu key
+        $(".sidebar").toggleClass('show');
+    });
+    $(".sidebar + .fixed-body").click(function(){     //Click the sidebar key submenu key
+        $(".sidebar").removeClass('show');
+    });
+});

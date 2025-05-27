@@ -40,6 +40,16 @@ https://www.emlog.net
 2. In the browser to visit the site domain name, the program will automatically jump to the installation page, follow the prompts to install.
 3. The installation process will not create the database, you need to create it in advance, click "Install emlog!", the installation is successful.
 
+## How to install when emlog is installed
+
+1. Backup site database and site root directory
+2. Download the source code and decompress it locally
+3. Delete the "init. php" file in the root directory of the domain name, upload the "init. php" file that was just extracted locally
+4. Delete the "admin" and "include" folder under the root directory of the site, upload the directory with the same name that was just extracted locally to the root directory of the site
+5. Delete the "content/plugins/tpl_options" and "content/plugins/tips" folders under the root directory of the site, the "content/plugins/tpl_options" and "content/plugins/tips" folders that have just been locally extracted are uploaded
+6. Delete the "content/templates/default" folder under the root directory of the site, upload the "content/templates/default" folder that was just extracted locally
+7. Clean CDN cache and local browser cache
+
 ## Other ways to Install
 
 - [Bt panel one click deployment](/install/install_bt.md)

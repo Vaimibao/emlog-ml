@@ -40,7 +40,6 @@ $(function () {
     }
     //Bind event handler
     body.on('click', '.' + attr('setting'), function () {
-        document.getElementsByClassName("container-fluid")[0].children[0].style.cssText = 'display:none !important';
         $('.container-fluid .row').fadeToggle();
         $.ajax({
             url: tplOptions.baseUrl, data: {

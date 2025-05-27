@@ -1056,6 +1056,7 @@ $lang = array(
     'go_buy' => '立即购买',//'Buy now',
     'download&install' => '下载安装',//'Download and install',
     'app_store' => '应用商店',//'App store',
+    'actived' => '正在使用',//'Used already',
     'purchased' => '已购买',//'Purchased',
     'download_count' => '下载次数',//'Downloads',
     'install_now' => '立即安装',//'Install Now',

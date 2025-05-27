@@ -39,6 +39,9 @@
                             </div>
                             <div class="card-text">
                                 <div>
+                                    <?php if (Plugin::isActive($v['alias'])): ?>
+                                        <a href="plugin.php" class="em-but em-but-warning all-radius btn-block"><?= lang('actived') ?></a>
+                                    <?php endif; ?>
                                     <?php if (empty($v['download_url'])): ?>
                                         <a href="<?= $v['buy_url'] ?>" class="em-but em-but-success all-radius btn-block"><?=lang('contact_to_install')?></a>
                                     <?php else: ?>

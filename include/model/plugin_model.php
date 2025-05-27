@@ -59,13 +59,27 @@ class Plugin_Model
     public function rmCallback($plugin)
     {
         $r = explode('/', $plugin, 2);
-        $plugin = $r[0];
-        $callback_file = "../content/plugins/$plugin/{$plugin}_callback.php";
-        if (file_exists($callback_file)) {
-            require_once $callback_file;
-            if (function_exists('callback_rm')) {
+        $plugin_folder = $r[0];
+        $callback_file = "../content/plugins/{$plugin_folder}/{$plugin_folder}_callback.php";
+
+        if (!file_exists($callback_file)) {
+            return;
+        }
+
+        require_once $callback_file;
+        if (!function_exists('callback_rm')) {
+            return;
+        }
+
+        // If it is PHP 7+ and not a development environment, handle the 'Error' exception.
+        if (class_exists('Error') && (!Util::isDevEnv())) {
+            try {
                 callback_rm();
+            } catch (Error $e) {
+                // Do nothing.
             }
+        } else {
+            callback_rm();
         }
     }
 

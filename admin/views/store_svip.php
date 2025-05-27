@@ -47,6 +47,9 @@
                         </div>
                         <div class="card-text">
                             <div>
+                                <?php if (Plugin::isActive($v['alias'])): ?>
+                                    <a href="plugin.php" class="em-but em-but-warning all-radius btn-block"><?= lang('actived') ?></a>
+                                <?php endif; ?>
                                 <a href="#" class="em-but em-but-warning all-radius btn-block installBtn" data-url="<?= urlencode($v['download_url']) ?>" data-cdn-url="<?= urlencode($v['cdn_download_url']) ?>" data-type="<?= $type ?>"><?= lang('install_now') ?></a>
                             </div>
                         </div>

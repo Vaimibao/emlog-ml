@@ -108,6 +108,9 @@
                             </div>
                             <div class="card-text">
                                 <div>
+                                    <?php if (Plugin::isActive($v['alias'])): ?>
+                                        <a href="plugin.php" class="em-but em-but-warning all-radius btn-block"><?= lang('actived') ?></a>
+                                    <?php endif; ?>
                                     <?php if ($v['price'] > 0): ?>
                                         <?php if ($v['purchased'] === true): ?>
                                             <a href="store.php?action=mine" class="btn btn-light"><?= lang('purchased') ?></a>

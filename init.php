@@ -15,18 +15,6 @@ const EMLOG_ROOT = __DIR__;
 require_once EMLOG_ROOT . '/config.php';
 require_once EMLOG_ROOT . '/include/lib/common.php';
 
-if (getenv('EMLOG_ENV') === 'develop' || (defined('ENVIRONMENT') && ENVIRONMENT === 'develop')) {
-    error_reporting(E_ALL);
-} else {
-    error_reporting(1);
-}
-
-if (extension_loaded('mbstring')) {
-    mb_internal_encoding('UTF-8');
-}
-
-spl_autoload_register("emAutoload");
-
 //Set Interface language
 $url = $_SERVER['REQUEST_URI'];
 if (isset($_GET['language'])) {
@@ -39,6 +27,18 @@ if (empty($_SESSION['LANG'])) {
     $_SESSION['LANG'] = DEFAULT_LANG;
 }
 define('LANG', $_SESSION['LANG']);
+
+spl_autoload_register("emAutoload");
+
+if (Util::isDevEnv()) {
+    error_reporting(E_ALL);
+} else {
+    error_reporting(1);
+}
+
+if (extension_loaded('mbstring')) {
+    mb_internal_encoding('UTF-8');
+}
 
 //Blog language direction
 const LANG_DIR = LANG_LIST[LANG]['dir'];
@@ -92,10 +92,6 @@ define('TEMPLATE_PATH', TPLS_PATH . Option::get('nonce_templet') . '/');
 const MSGCODE_EMKEY_INVALID = 1001;
 const MSGCODE_NO_UPUPDATE = 1002;
 const MSGCODE_SUCCESS = 200;
-
-//Access Scheme
-define('SCHEME', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://');
-define('ROOT_URL', str_replace('\\', '/', dirname($_SERVER['PHP_SELF'])));
 
 $active_plugins = Option::get('active_plugins');
 $emHooks = [];

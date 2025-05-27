@@ -11201,7 +11201,6 @@ a:focus {
     transition: .3s;
     z-index: 7;
 }
-
 .sidebar.show + .fixed-body {
     visibility: unset;
     opacity: 1;

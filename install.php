@@ -6,7 +6,7 @@
  * @link https://www.emlog.net
  */
 
-define('EMLOG_ROOT', str_replace('\\', '/', __DIR__));
+const EMLOG_ROOT = __DIR__;
 const LANG = 'en';            //zh-CN, en, ru, etc.
 const LANG_DIR = 'ltr';       //ltr, rtl
 
@@ -231,7 +231,7 @@ if (!$act) {
                             <label class="form-label care"><?= lang('db_hostname_info') ?></label>
                         </div>
                         <div class="input-group mb10">
-                            <span class="input-group-text"><?= lang('db_user') ?>:</span>
+                            <span class="input-group-text"><?= lang('db_user') ?></span>
                             <input name="dbuser" type="text" class="form-control" value="" required>
                         </div>
                         <div class="input-group mb10">

@@ -88,7 +88,6 @@
 </div>
 </div>
 <?php doAction('adm_footer') ?>
-<script src="./views/js/sb-admin-2.min.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
 <script>
     $(function() {
         // Scroll to top button appear
@@ -116,6 +115,10 @@
         });
         $(document).on('pjax:success', function() {
             initPageScripts();
+            // Rebind sidebar toggle event
+            $("#sidebarToggleTop").off('click').on('click', function() {
+                window.toggleSidebar();
+            });
         });
         $(document).on('pjax:beforeSend', function() {
             closePageScripts();
