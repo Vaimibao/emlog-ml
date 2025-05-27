@@ -11172,7 +11172,8 @@ a:focus {
 
 .sidebar {
     width: 6.5rem;
-    min-height: calc(100vh - 0.5rem);
+    height: calc(100vh - 0.5rem);
+    overflow: auto;
 }
 
 @media (max-width: 767px) {

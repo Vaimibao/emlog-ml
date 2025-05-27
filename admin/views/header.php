@@ -162,7 +162,7 @@
                                 <div class="topbar-divider d-none d-sm-block"></div>
                                 <!-- /Change Language -->
                                 <li class="nav-item mx-1">
-                                    <a class="nav-link" href="blogger.php" role="button">
+                                    <a class="nav-link pd0" href="blogger.php" role="button">
                                         <img class="img-profile rounded-circle"
                                             src="<?= User::getAvatar($user_cache[UID]['avatar']) ?>">
                                     </a>
