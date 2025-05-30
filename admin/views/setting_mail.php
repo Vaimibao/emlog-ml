@@ -123,7 +123,7 @@
             <p>{{mail_content}}</p>
         </div>
         <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; text-align: center; font-size: 12px; color: #888; margin-top: 20px;">
-            <small>`<?= lang('from_site') ?>`：{{mail_site_title}}</small>
+            <small><?= lang('from_site') ?>：{{mail_site_title}}</small>
         </div>
     </div>
 </body>
@@ -152,7 +152,7 @@
             <div class="divider"></div>
         </div>
         <div class="footer">
-            <small>`<?= lang('from_site') ?>`：{{mail_site_title}}</small>
+            <small><?= lang('from_site') ?>：{{mail_site_title}}</small>
         </div>
     </div>
 </body>
@@ -189,7 +189,7 @@
             <p>{{mail_content}}</p>
         </div>
         <div class="footer">
-            <small>`<?= lang('from_site') ?>`：{{mail_site_title}}</small>
+            <small><?= lang('from_site') ?>：{{mail_site_title}}</small>
         </div>
     </div>
 </body>
