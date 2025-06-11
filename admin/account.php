@@ -182,7 +182,7 @@ if ($action == 'send_email_code') {
     if ($ret) {
         Output::ok();
     } else {
-        Output::error(lang('test_mail_failed'));
+        Output::error(lang('cehck_mail_configure'));
     }
 }
 

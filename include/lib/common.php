@@ -50,7 +50,8 @@ if (!function_exists('getIp')) {
             $ip = trim($list[0]);
         }
 
-        if (!ip2long($ip)) {
+        // Supports IPv4 and IPv6
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             $ip = '';
         }
 
@@ -267,15 +268,19 @@ function isZip($fileName)
 }
 
 /**
- * Pagination Function
- *
+ * Generate pagination navigation bar
+ * 
  * @param int $count The total number of entries
  * @param int $perlogs The number of articles per page
  * @param int $page The current page number
  * @param string $url Page address
- * @return string
+ * @param string $anchor anchor
+ * @param int $showPages Display the number of page numbers. The default is 7
+ * @param string $prevText Previous page button text, default is &laquo;
+ * @param string $nextText Next page button text, default is &raquo;
+ * @return string Return to paging navigation HTML code
  */
-function pagination($count, $perlogs, $page, $url, $anchor = '')
+function pagination($count, $perlogs, $page, $url, $anchor = '', $showPages = 7, $prevText = '&laquo;', $nextText = '&raquo;')
 {
     $pnums = @ceil($count / $perlogs);
     $re = '';
@@ -289,17 +294,25 @@ function pagination($count, $perlogs, $page, $url, $anchor = '')
     $neighborNum = 1;
     $minKey = 4;
 
+    // Dynamically adjust the display logic according to the showPages parameter
+    if ($showPages >= 5) {
+        $minKey = $showPages;
+        $neighborNum = floor(($showPages - 3) / 2); // Subtract the first page, the last page and the current page, and take half of the remaining pages as the neighbor pages
+    }
+
     if ($pnums == 1)
         return $re;
-    if ($page >= 1 && $pnums >= 7) {
+    if ($page >= 1 && $pnums >= $showPages) {
         $frontContent .= " <a href=\"$urlHome$anchor\">1</a> ";
         $frontContent .= " <em> ... </em> ";
         $endContent .= " <em> ... </em> ";
         $endContent .= " <a href=\"$url$pnums$anchor\">$pnums</a> ";
-        if ($pnums >= 12) {
-            $minKey = 7;
-            $neighborNum = 3;
+
+        // Display logic when dynamically adjusting larger pages
+        if ($pnums >= ($showPages * 2)) {
+            $neighborNum = floor($showPages / 2);
         }
+
         if ($page < $minKey) {
             $circle_b = $minKey;
             $frontContent = '';
@@ -313,10 +326,10 @@ function pagination($count, $perlogs, $page, $url, $anchor = '')
             $circle_b = $page + $neighborNum;
         }
         if ($page != 1) {
-            $frontContent = " <a href=\"$url" . ($page - 1) . "$anchor\" title=\"Previous Page\">&laquo;</a> " . $frontContent;
+            $frontContent = " <a href=\"$url" . ($page - 1) . "$anchor\" title=\"Previous Page\">$prevText</a> " . $frontContent;
         }
         if ($page != $pnums) {
-            $endContent .= " <a href=\"$url" . ($page + 1) . "$anchor\" title=\"Next Page\">&raquo;</a> ";
+            $endContent .= " <a href=\"$url" . ($page + 1) . "$anchor\" title=\"Next Page\">$nextText</a> ";
         }
     }
     for ($i = $circle_a; $i <= $circle_b; $i++) {
@@ -1278,7 +1291,8 @@ if (!function_exists('getFirstImage')) {
         $imgNode = $xpath->query('//img')->item(0);
 
         if ($imgNode) {
-            return $imgNode->getAttribute('src');
+            $src = $imgNode->getAttribute('src');
+            return trim($src, '\\"'); // Clean up redundant characters (quotation marks, backslashes, etc.) in the path
         }
 
         return null;

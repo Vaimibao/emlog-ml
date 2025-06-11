@@ -47,7 +47,7 @@
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menu_content" aria-expanded="true" aria-controls="menu_content">
                     <i class="line-i text-box-twotone"></i><span><?= lang('articles') ?></span>
                 </a>
-                <div id="menu_content" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="menu_content" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style="z-index: 1055;">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" id="menu_write" href="article.php?action=write"><?= lang('post_write') ?></a>
                         <a class="collapse-item" id="menu_log" href="article.php"><?= lang('articles') ?></a>
@@ -76,7 +76,7 @@
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menu_view" aria-expanded="true" aria-controls="menu_view">
                         <i class="line-i cookie-twotone"></i><span><?= lang('exterior') ?></span>
                     </a>
-                    <div id="menu_view" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div id="menu_view" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar" style="z-index: 1055;">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item" id="menu_tpl" href="template.php"><?= lang('templates') ?></a>
                             <a class="collapse-item" id="menu_navi" href="navbar.php"><?= lang('navigation') ?></a>
@@ -121,7 +121,7 @@
                         <!-- shortcut bar -->
                         <div id="shortcut-bar-container" class="position-relative d-none d-md-inline-block">
                             <div id="shortcut-bar-toggle" class="d-inline-block px-2" style="cursor:pointer;">
-                                <i class="icofont-simple-right"></i>
+                                <i class="icofont-simple-right text-gray-400"></i>
                             </div>
                             <div id="shortcut-bar-content" class="d-inline-block position-absolute overflow-hidden text-nowrap"
                                 style="left:30px; top:0; width:0; transition:width 0.3s;">

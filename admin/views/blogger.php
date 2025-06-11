@@ -124,12 +124,12 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0">
                 <h5 class="modal-title" id="exampleModalLabel"><?= lang('modify_email') ?></h5>
-                <span id="message" class="small ml-5"></span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
+                <div id="message"></div>
                 <form action="blogger.php?action=change_email" id="email_setting_form" method="post">
                     <div class="form-group">
                         <label><?= lang('email') ?></label>
@@ -157,6 +157,7 @@
         $("#menu_category_sys").addClass('active');
         $("#menu_sys").addClass('show');
         $("#menu_setting").addClass('active');
+
         setTimeout(hideActived, 3600);
 
         // 提交表单
@@ -192,6 +193,7 @@
             var $btn = $(this);
             var $message = $('#message');
             $btn.prop('disabled', true);
+            $message.empty().removeClass().show();
             var count = 60;
             var countdown = setInterval(function() {
                 $btn.text('<?= lang('send_email_again') ?> (' + count + ')');
@@ -210,10 +212,11 @@
                     mail: email
                 },
                 success: function(response) {
-                    $message.text('<?= lang('send_verification_code_tip') ?>').css('color', 'green');
+                    $message.text('<?= lang('send_verification_code_tip') ?>').addClass('alert alert-success');
                 },
                 error: function(data) {
-                    $message.text(data.responseJSON.msg).css('color', 'red');
+                    $message.text(data.responseJSON.msg).addClass('alert alert-danger');
+                    setTimeout(hideActived, 3600);
                     clearInterval(countdown);
                     $btn.text('<?= lang('send_verification_code') ?>');
                     $btn.prop('disabled', false);

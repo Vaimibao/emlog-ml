@@ -92,6 +92,7 @@ $lang = array(
     'test_mail_subj' => 'Test mail',//'测试邮件',
     'test_mail_body' => 'This is a test email',//'这是一封测试邮件',
     'test_mail_failed' => 'Failed to send the mail',//'发送失败',
+    'cehck_mail_configure' => 'Failed to send the mail verification code. Please check the mail service settings',//'发送邮件验证码失败，请检查邮件服务设置',
 
 //---------------------------
 //admin/setting_mail.php
@@ -172,6 +173,8 @@ $lang = array(
     'search_by_category' => 'Search by category',//'按分类查找',
     'search_by_tpl_category' => 'Search by template category',//'按模板分类查找',
     'search_by_plugin_category' => 'Search by plugin category',//'按插件分类查找',
+    'previous_page' => 'Previous page',//'上一页',
+    'next_page' => 'Next page',//'下一页',
 
 //---------------------------
 //admin/style.php

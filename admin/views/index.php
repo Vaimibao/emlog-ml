@@ -26,7 +26,7 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <a href="./article.php?checked=n"><?= lang('articles_pending') ?></a>
-                        <a href="./article.php?checked=n"><span class="badge badge-danger badge-pill"><?= $sta_cache['checknum'] ?></span></a>
+                        <a href="./article.php?checked=n"><span class="badge badge-pink badge-pill"><?= $sta_cache['checknum'] ?></span></a>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <a href="./comment.php?hide=y"><?= lang('pending_review') ?></a>
@@ -34,7 +34,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <a href="./user.php"><?= lang('users') ?></a>
-                        <a href="./user.php"><span class="badge badge-success badge-pill"><?= count($user_cache) ?></span></a>
+                        <a href="./user.php"><span class="badge badge-cyan badge-pill"><?= count($user_cache) ?></span></a>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <a href="./article.php"><?= lang('articles') ?></a>
