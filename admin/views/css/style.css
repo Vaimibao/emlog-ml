@@ -1,5 +1,5 @@
 /*
-editor.md编辑器的样式配置
+Style configuration of editor.md editor
  */
 * {
     padding: 0;
@@ -391,4 +391,166 @@ body {
 
 .custom-control-label {
     cursor: pointer;
+}
+
+/* 
+Extended 8 badge color styles - based on Bootstrap4
+
+<span class="badge badge-orange">Orange</span>
+<span class="badge badge-purple">Purple</span>
+<span class="badge badge-cyan">Cyan</span>
+<span class="badge badge-pink">Pink</span>
+<span class="badge badge-light-gray">Light gray</span>
+<span class="badge badge-forest">Forest</span>
+<span class="badge badge-navy">Navy</span>
+<span class="badge badge-gold">Gold</span>
+
+*/
+
+/* 1. Orange badge - warning */
+.badge-orange {
+    color: #fff;
+    background-color: #fd7e14;
+}
+
+.badge-orange[href]:hover,
+.badge-orange[href]:focus {
+    color: #fff;
+    background-color: #e8650e;
+    text-decoration: none;
+}
+
+/* 2. Purple Badge - Premium/VIP */
+.badge-purple {
+    color: #fff;
+    background-color: #6f42c1;
+}
+
+.badge-purple[href]:hover,
+.badge-purple[href]:focus {
+    color: #fff;
+    background-color: #59359a;
+    text-decoration: none;
+}
+
+/* 3. Cyan Badge - Information/Notification */
+.badge-cyan {
+    color: #fff;
+    background-color: #20c997;
+}
+
+.badge-cyan[href]:hover,
+.badge-cyan[href]:focus {
+    color: #fff;
+    background-color: #1aa179;
+    text-decoration: none;
+}
+
+/* 4. Pink Badge - Special/Recommended */
+.badge-pink {
+    color: #fff;
+    background-color: #e83e8c;
+}
+
+.badge-pink[href]:hover,
+.badge-pink[href]:focus {
+    color: #fff;
+    background-color: #d91a72;
+    text-decoration: none;
+}
+
+/* 5. Light grey badge - neutral/default */
+.badge-light-gray {
+    color: #495057;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.badge-light-gray[href]:hover,
+.badge-light-gray[href]:focus {
+    color: #495057;
+    background-color: #e9ecef;
+    text-decoration: none;
+}
+
+/* 6. Forest badge - environmental protection/nature */
+.badge-forest {
+    color: #fff;
+    background-color: #198754;
+}
+
+.badge-forest[href]:hover,
+.badge-forest[href]:focus {
+    color: #fff;
+    background-color: #146c43;
+    text-decoration: none;
+}
+
+/* 7. Navy badge - steady/business */
+.badge-navy {
+    color: #fff;
+    background-color: #0d47a1;
+}
+
+.badge-navy[href]:hover,
+.badge-navy[href]:focus {
+    color: #fff;
+    background-color: #083570;
+    text-decoration: none;
+}
+
+/* 8. Gold badge - high-end/reward */
+.badge-gold {
+    color: #212529;
+    background-color: #ffc107;
+}
+
+.badge-gold[href]:hover,
+.badge-gold[href]:focus {
+    color: #212529;
+    background-color: #e0a800;
+    text-decoration: none;
+}
+
+/* Badge size variants */
+.badge-lg {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+}
+
+.badge-sm {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.75rem;
+    border-radius: 0.2rem;
+}
+
+/* Badge animation effect */
+.badge-pulse {
+    animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Badge shadow effect */
+.badge-shadow {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.badge-shadow:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
