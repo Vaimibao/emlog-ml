@@ -6,7 +6,9 @@
  * @link https://www.emlog.net
  */
 
-session_start();
+if (!isset($_SESSION)) {
+    session_start();
+}
 ob_start();
 header('Content-Type: text/html; charset=UTF-8');
 

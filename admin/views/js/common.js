@@ -721,7 +721,7 @@ $(document).ready(function(){
                 $(menu_id[i]).addClass("sd_menu_hd");
             }
         }
-        $(".sidebar").toggleClass("sd-hidden");
+        // $(".sidebar").toggleClass("sd-hidden");
     }else{
         var wrapper_height = $(".navbar-nav").outerHeight();
         $("#content-wrapper").css("min-height",wrapper_height+"px");
