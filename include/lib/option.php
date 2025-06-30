@@ -8,8 +8,8 @@
 
 class Option
 {
-    const EMLOG_VERSION = 'pro 2.5.16';
-    const EMLOG_VERSION_TIMESTAMP = 1749476557;
+    const EMLOG_VERSION = 'pro 2.5.17';
+    const EMLOG_VERSION_TIMESTAMP = 1751166895;
     const UPLOADFILE_PATH = '../content/uploadfile/';
     const UPLOADFILE_FULL_PATH = EMLOG_ROOT . '/content/uploadfile/';
 
@@ -156,7 +156,7 @@ class Option
         $options_cache['site_title'] = $options_cache['site_title'] ?: $options_cache['blogname'];
         $options_cache['site_description'] = $options_cache['site_description'] ?: $options_cache['bloginfo'];
         if (empty($options_cache['emkey'])) {
-            $options_cache['site_title'] = '&#x672A;&#x6CE8;&#x518C;&#x7684;&#x7248;&#x672C; ' . $options_cache['site_title'];
+            $options_cache['site_title'] = '&#x672A;&#x6B63;&#x7248;&#x6CE8;&#x518C;&#x7684;&#x7248;&#x672C; ' . $options_cache['site_title'];
         }
         return $options_cache;
     }

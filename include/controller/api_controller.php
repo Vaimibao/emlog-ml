@@ -151,6 +151,7 @@ class Api_Controller
         output::ok(['article_id' => $article_id,]);
     }
 
+    // Article (draft) update
     private function article_update()
     {
         $id = Input::postIntVar('id');
@@ -198,6 +199,7 @@ class Api_Controller
         output::ok();
     }
 
+    // Article List
     private function article_list()
     {
         $page = Input::getIntVar('page', 1);
@@ -279,6 +281,7 @@ class Api_Controller
         ]);
     }
 
+    // Article Detail
     private function article_detail()
     {
         $id = Input::getIntVar('id', 0);
@@ -327,6 +330,93 @@ class Api_Controller
         output::ok(['article' => $article,]);
     }
 
+    // Draft list
+    private function draft_detail()
+    {
+        $id = Input::getIntVar('id', 0);
+
+        $this->auth();
+        $author_uid = 0;
+        if ($this->curUid) {
+            $author_uid = $this->curUid;
+        }
+
+        $sort_cache = $this->Cache->readCache('sort');
+        $r = $this->Log_Model->getDetail($id, $author_uid);
+        $article = '';
+        if (empty($r) || $r['type'] !== 'blog' || $r['hide'] !== 'y') {
+            Output::error('Draft not found');
+        }
+
+        $author = $this->getAuthor($r['author']);
+
+        $article = [
+            'title'         => $r['title'],
+            'date'          => date('Y-m-d H:i:s', $r['date']),
+            'id'            => (int)$r['gid'],
+            'sort_id'       => (int)$r['sortid'],
+            'sort_name'     => isset($sort_cache[$r['sortid']]['sortname']) ? $sort_cache[$r['sortid']]['sortname'] : '',
+            'author_id'     => (int)$r['author'],
+            'author_name'   => $author['nickname'],
+            'author_avatar' => $author['avatar'],
+            'content'       => $r['content'],
+            'excerpt'       => $r['excerpt'],
+            'cover'         => $r['cover'],
+            'views'         => (int)$r['views'],
+            'comnum'        => (int)$r['comnum'],
+            'like_count'    => (int)$r['like_count'],
+            'top'           => $r['top'],
+            'sortop'        => $r['sortop'],
+            'tags'          => $this->getTags($id),
+            'fields'        => $r['fields'],
+        ];
+
+        $this->Log_Model->updateViewCount($id);
+
+        output::ok(['draft' => $article,]);
+    }
+
+    // Drafts list
+    private function draft_list()
+    {
+        $count = Input::getIntVar('count', Option::get('index_lognum'));
+        $this->auth();
+
+        $author_uid = $this->curUid ? $this->curUid : 0;
+        $r = $this->Log_Model->getList($author_uid, 'y', 1, 'blog', $count);
+
+        $sort_cache = $this->Cache->readCache('sort');
+        $drafts = [];
+        foreach ($r as $value) {
+            $author = $this->getAuthor($value['author']);
+            $drafts[] = [
+                'id'          => (int)$value['gid'],
+                'title'       => $value['title'],
+                'cover'       => $value['cover'],
+                'excerpt'     => $value['excerpt'],
+                'date'        => date('Y-m-d H:i:s', $value['date']),
+                'author_id'   => (int)$value['author'],
+                'author_name' => $author['nickname'],
+                'author_avatar' => $author['avatar'],
+                'sort_id'     => (int)$value['sortid'],
+                'sort_name'   => isset($sort_cache[$value['sortid']]['sortname']) ? $sort_cache[$value['sortid']]['sortname'] : '',
+                'views'       => (int)$value['views'],
+                'comnum'      => (int)$value['comnum'],
+                'like_count'  => (int)$value['like_count'],
+                'top'         => $value['top'],
+                'sortop'      => $value['sortop'],
+                'tags'        => $this->getTags((int)$value['gid']),
+                'need_pwd'    => $value['password'] ? 'y' : 'n',
+                'fields'      => Field::getFields((int)$value['gid']),
+            ];
+        }
+
+        output::ok([
+            'drafts' => $drafts,
+        ]);
+    }
+
+    // Sort list
     private function sort_list()
     {
         $sort_cache = $this->Cache->readCache('sort');
@@ -376,6 +466,7 @@ class Api_Controller
         output::ok(['note_id' => $id,]);
     }
 
+    // Notes list
     private function note_list()
     {
         $page = Input::getIntVar('page', 1);

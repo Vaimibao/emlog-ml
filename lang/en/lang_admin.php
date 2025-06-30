@@ -76,7 +76,7 @@ $lang = array(
 //admin/plugin.php
     'plugin_upload_error' => 'Plugin upload failed',//'插件上传失败',
     'update_failed_network' => 'The update request failed, it may be a network issue',//'请求更新失败，可能是网络问题',
-    'pro_unregistered' => 'Unregistered pro version',//'未注册的pro版本',
+    'pro_unregistered' => 'Unregistered pro version',//'未正版注册的pro版本',
     'pro_unregistered_tip' => 'Your Emlog has not been officially registered yet',//'您的emlog尚未正版注册',
     'unable_to_download_update' => 'Unable to download update package, it may be a network problem',//'无法下载更新包，可能是服务器网络问题'
     'update_package_exception' => 'Update package exception',//'更新包异常'
@@ -468,10 +468,11 @@ $lang = array(
     'compress_zip' => 'Compress to zip format',//'压缩成zip包',
     'backup_file_name' => 'Backup file name',//'备份文件名',
     'backup_start' => 'Start Backup',//'开始备份',
-    'backup_version_tip' => 'You can import only the same emlog version database backup files, and the database table prefix must be the same.<br>Current database table prefix: ',//'仅可导入相同版本emlog的数据库备份文件，且数据库表前缀需保持一致。<br/>当前数据库表前缀：',
+    'backup_version_tip' => 'You can import only the same emlog version database backup files',//'仅可导入相同版本emlog的数据库备份文件',
+    'backup_version_tip2' => 'Please select SQL file or backup ZIP package, and the database table prefix must be consistent. Current database table prefix: ',//'请选择SQL文件或备份的ZIP压缩包，且数据库表前缀需保持一致。当前数据库表前缀：',
     'cache_update_info' => 'Caching can speed up the site loading speed. Usually the system will automatically update the cache, no manual operation required. But in some special cases, such as the cache file or the database were modified manually, and so the page appears abnormal, it is only need to update the cache manually.',//'缓存可以加快站点的加载速度，通常系统会自动更新缓存。特殊情况需要手动更新，如：缓存文件被修改、手动修改过数据库、页面出现异常等。',
     'cache_update' => 'Update the cache',//'更新缓存',
-//    'backup_file_select' => 'Please select the backup file you want to operate',//'请选择要操作的备份文件',
+    'select_backup_file' => 'Please select the backup file',//'选择备份文件',
     'backup_delete_sure' => 'Are you sure you want to delete the selected backup files? ',//'你确定要删除所选备份文件吗？',
 
 //---------------------------
@@ -557,12 +558,12 @@ $lang = array(
     'sys_version' => 'Operating System',//'操作系统',
     'system_time_zone' => 'System timezone',//'系统时区',
     'emlog_version' => 'EMLOG version',//'EMLOG版本',
-    'unregistered' => 'unregistered',//'未注册',
-    'emlog_unregistered' => 'Your emlog pro is not registered yet',//'您的emlog pro尚未注册',
+    'unregistered' => 'unregistered',//'未正版注册',
+    'emlog_unregistered' => 'Your emlog pro is not registered yet',//'您的emlog未完成正版注册',
     'emlog_reg_advantages' => 'The emlog you installed has not been genuine registration, and you can use all the functions after registration.',//'您安装的emlog尚未完成正版注册，完成注册可使用全部功能',
     'advantage1' => '1. Get online upgrade function and upgrade to the latest version with one click',//'1. 获得在线升级功能，一键升级到最新版本',
     'advantage2' => '2. Unlock full Store features, including app online updates',//'2. 解锁完整应用商店功能，包括应用在线更新',
-    'advantage3' => '3. Remove all unregistered prompts and functional restrictions',//'3. 去除所有未注册提示及功能限制',
+    'advantage3' => '3. Remove all unregistered prompts and functional restrictions',//'3. 去除所有未正版注册提示及功能限制',
     'advantage4' => '4. Free application of hardcore SVIP: more than 20 paid plug-ins and multiple paid themes are free of charge',//'4. 铁杆SVIP免费应用：超过20款付费插件、多款付费主题免费用',
     'register_now' => 'Start genuine registration',//'开始正版注册',
     'click_to_register' => 'click to register',//'点击去注册',
@@ -1064,6 +1065,7 @@ $lang = array(
     'download_count' => 'Downloads',//'下载次数',
     'install_now' => 'Install Now',//'立即安装',
     'version_number' => 'Version number',//'版本号',
+    'load_more_btn' => 'Load more',//'点击加载更多',
 
 //---------------------------
 //admin/views/store_install.php

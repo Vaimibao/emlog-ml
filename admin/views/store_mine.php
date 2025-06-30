@@ -39,7 +39,7 @@
                             </div>
                             <div class="card-text">
                                 <div>
-                                    <?php if (Plugin::isActive($v['alias'])): ?>
+                                    <?php if (Plugin::isActive($v['alias']) || Template::isActive($v['alias'])): ?>
                                         <a href="plugin.php" class="em-but em-but-warning all-radius btn-block"><?= lang('actived') ?></a>
                                     <?php endif; ?>
                                     <?php if (empty($v['download_url'])): ?>

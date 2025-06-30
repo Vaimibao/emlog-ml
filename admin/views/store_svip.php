@@ -17,13 +17,19 @@
 <div class="mb-main">
     <div>
         <p class="alert alert-warning my-3"><a href="https://www.emlog.net/register"><?= lang('_svip') ?></a> <?= lang('free_install_applications_tip') ?>👇</p>
-    </div>
+        <div class="mb-3">
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-primary active" id="filterAll"><?= lang('all') ?></button>
+                <button type="button" class="btn btn-outline-success" id="filterTemplate"><?= lang('templates') ?></button>
+                <button type="button" class="btn btn-outline-primary" id="filterPlugin"><?= lang('plugins') ?></button>
+            </div>
+        </div>
     <div class="d-flex flex-wrap app-list">
         <?php foreach ($addons as $k => $v):
             $icon = $v['icon'] ?: "./views/images/theme.png";
             $type = $v['app_type'] === 'template' ? 'tpl' : 'plugin';
         ?>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-3 app-item" data-type="<?= $type ?>">
                 <div class="card mb-4 shadow-sm hover-shadow-lg">
                     <a href="#appModal" class="p-1" data-toggle="modal" data-target="#appModal" data-name="<?= $v['name'] ?>" data-url="<?= $v['app_url'] ?>" data-buy-url="<?= $v['buy_url'] ?>">
                         <img class="bd-placeholder-img card-img-top" alt="cover" width="100%" height="225" src="<?= $icon ?>">
@@ -47,7 +53,7 @@
                         </div>
                         <div class="card-text">
                             <div>
-                                <?php if (Plugin::isActive($v['alias'])): ?>
+                                <?php if (Plugin::isActive($v['alias']) || Template::isActive($v['alias'])): ?>
                                     <a href="plugin.php" class="em-but em-but-warning all-radius btn-block"><?= lang('actived') ?></a>
                                 <?php endif; ?>
                                 <a href="#" class="em-but em-but-warning all-radius btn-block installBtn" data-url="<?= urlencode($v['download_url']) ?>" data-cdn-url="<?= urlencode($v['cdn_download_url']) ?>" data-type="<?= $type ?>"><?= lang('install_now') ?></a>
@@ -80,5 +86,26 @@
     $(function() {
         $("#menu_store").addClass('active');
         setTimeout(hideActived, 3600);
+
+        // Filtering function
+        $('#filterAll').click(function() {
+            $('.app-item').show();
+            $('.btn-group button').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        $('#filterTemplate').click(function() {
+            $('.app-item').hide();
+            $('.app-item[data-type="tpl"]').show();
+            $('.btn-group button').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        $('#filterPlugin').click(function() {
+            $('.app-item').hide();
+            $('.app-item[data-type="plugin"]').show();
+            $('.btn-group button').removeClass('active');
+            $(this).addClass('active');
+        });
     });
 </script>

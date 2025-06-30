@@ -40,11 +40,15 @@
         <form action="data.php?action=import" enctype="multipart/form-data" method="post">
             <div class="card-body">
                 <div id="import">
-                    <p class="des"><?= lang('backup_version_tip') ?> <?= DB_PREFIX ?></p>
+                    <p class="des"><?= lang('backup_version_tip') ?></p>
                 </div>
-                <div>
-                    <input type="file" id="sqlfile" name="sqlfile" required>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" name="sqlfile" id="sqlfile" required>
+                    <label class="custom-file-label" for="sqlfile"><?= lang('select_backup_file') ?></label>
                 </div>
+                <small class="form-text text-muted mt-2">
+                    <?= lang('backup_version_tip2') ?><?= DB_PREFIX ?>
+                </small>
             </div>
             <div class="card-footer text-right">
                 <input name="token" id="token" value="<?= LoginAuth::genToken() ?>" type="hidden" />
@@ -70,5 +74,11 @@
         $("#menu_sys").addClass('show');
         $("#menu_data").addClass('active');
         setTimeout(hideActived, 3600);
+
+        // Monitor the upload of backup files
+        $('#sqlfile').on('change', function() {
+            var fileName = $(this).get(0).files[0] ? $(this).get(0).files[0].name : '';
+            $(this).next('.custom-file-label').text(fileName || '<?= lang('select_backup_file') ?>');
+        });
     });
 </script>

@@ -81,7 +81,8 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <?php if (!Register::isRegLocal()) : ?>
-                                    <a href="https://www.emlog.net/register" target="_blank"><span class="badge badge-secondary">Emlog <?= Option::EMLOG_VERSION ?> <?= lang('unregistered') ?></span></a>
+                                    <a href="https://www.emlog.net/register" target="_blank"><span class="badge badge-secondary">Emlog <?= Option::EMLOG_VERSION ?></span></a>
+                                    <a href="https://www.emlog.net/register" target="_blank" class="badge badge-secondary"><?= lang('unregistered') ?></a>
                                 <?php else: ?>
                                     <a href="https://www.emlog.net" target="_blank"><span class="badge badge-success">Emlog <?= ucfirst(Option::EMLOG_VERSION) ?></span></a>
                                     <?php if (Register::getRegType() === 2): ?>
@@ -107,23 +108,53 @@
     <?php if (!Register::isRegLocal()) : ?>
         <div class="row">
             <div class="col-lg-6 mb-3">
-                <div class="card">
-                    <div class="card-header bg-danger text-white">
+                <div class="card shadow">
+                    <div class="card-header bg-gradient-warning text-danger">
                         <h6 class="my-0"><?= lang('emlog_reg_advantages') ?></h6>
                     </div>
                     <div class="card-body">
-                        <p><?= lang('advantage1') ?></p>
-                        <p><?= lang('advantage2') ?></p>
-                        <p><?= lang('advantage3') ?></p>
-                        <p><?= lang('advantage4') ?></p>
+                        <p><span class="badge badge-warning badge-pill">1</span> <?= lang('advantage1') ?></p>
+                        <p><span class="badge badge-warning badge-pill">2</span> <?= lang('advantage2') ?></p>
+                        <p><span class="badge badge-warning badge-pill">3</span> <?= lang('advantage3') ?></p>
+                        <p><span class="badge badge-warning badge-pill">4</span> <?= lang('advantage4') ?></p>
                         <p>
-                            <a href="auth.php" class="btn btn-sm btn-primary shadow-lg"> <?= lang('register_now') ?></a>
-                            <a href="https://emlog.net/register" target="_blank" class="btn btn-sm ml-3 btn-success shadow-lg"><?= lang('get_emkey') ?></a>
+                            <a href="auth.php" class="btn btn-danger px-4">
+                                <?= lang('register_now') ?>
+                            </a>
+                            <a href="https://emlog.net/register" target="_blank" class="btn btn-outline-success px-4">
+                                <i class="icofont-external-link me-2"></i>
+                                <?= lang('get_emkey') ?>
+                            </a>
                         </p>
                     </div>
                 </div>
             </div>
         </div>
+        <style>
+            .bg-gradient-warning {
+                background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            }
+
+            .registration-prompt {
+                animation: slideInUp 0.6s ease-out;
+            }
+
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .registration-prompt .card-body {
+                background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            }
+        </style>
     <?php endif ?>
     <div class="modal fade" id="update-modal" tabindex="-1" role="dialog" aria-labelledby="update-modal-label" aria-hidden="true">
         <div class="modal-dialog" role="document">

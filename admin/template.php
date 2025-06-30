@@ -122,7 +122,7 @@ if ($action === 'check_update') {
         Output::error(lang('update_failed_network'));
     }
     if ($ret['code'] === MSGCODE_EMKEY_INVALID) {
-        Output::error(lang('pro_unregistered'));
+        Output::error(lang('pro_unregistered_tip'));
     }
 
     Output::ok($ret['data']);

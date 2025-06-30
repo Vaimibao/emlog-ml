@@ -135,13 +135,14 @@ class Log_Model
      * @param int $blogId ID of the article to be retrieved.
      * @return array|false An array of article record, or false if not found.
      */
-    public function getDetail($blogId)
+    public function getDetail($blogId, $uid = 0)
     {
         $blogId = (int)$blogId;
         if (empty($blogId)) {
             return false;
         }
-        $sql = "SELECT t1.*, t2.sid, t2.sortname, t2.alias as sort_alias FROM $this->table t1 LEFT JOIN $this->table_sort t2 ON t1.sortid=t2.sid WHERE t1.gid=$blogId";
+        $author = $uid ? "and author=$uid" : '';
+        $sql = "SELECT t1.*, t2.sid, t2.sortname, t2.alias as sort_alias FROM $this->table t1 LEFT JOIN $this->table_sort t2 ON t1.sortid=t2.sid WHERE t1.gid=$blogId $author";
         $res = $this->db->query($sql);
         $row = $this->db->fetch_array($res);
         if ($row) {
@@ -173,7 +174,33 @@ class Log_Model
     }
 
     /**
-     * Query all sub articles
+     * Get a list of articles
+     *
+     * @param string $author author UID
+     * @param string $hide_state hidden state
+     * @param int $page Page numbers for pagination
+     * @param string $type Article Type
+     * @param int $perpage_num Quantity per page
+     * @return array Article List
+     */
+    public function getList($author = '', $hide_state = '', $page = 1, $type = 'blog', $perpage_num = 20)
+    {
+        $author = $author ? 'and author=' . $author : '';
+        $hide_state = $hide_state ? "and hide='$hide_state'" : '';
+        $start_limit = !empty($page) ? ($page - 1) * $perpage_num : 0;
+        $limit = "LIMIT $start_limit, " . $perpage_num;
+        $sql = "SELECT * FROM $this->table WHERE type='$type' $author $hide_state ORDER BY date DESC $limit";
+        $res = $this->db->query($sql);
+        $logs = [];
+        while ($row = $this->db->fetch_array($res)) {
+            $row['title'] = !empty($row['title']) ? htmlspecialchars($row['title']) : lang('no_title');
+            $logs[] = $row;
+        }
+        return $logs;
+    }
+
+    /**
+     * 查询所有的子文章.
      *
      * @param int $parentID The ID of the parent to filter logs.
      * @return array|false An array of logs matching the parent ID, or false if the parent ID is invalid.

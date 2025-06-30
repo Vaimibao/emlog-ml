@@ -488,7 +488,7 @@ function imgPasteExpand(thisEditor) {
                     var image = resp.data.images[0];
                     if (image) {
                         console.log(lang('result_ok'))
-                        replaceByNum(`[![](${image.media_icon})](${image.media_url})`, 10);  // The number 10 here corresponds to "Uploading...100% ', 10 characters
+                        replaceByNum(`![](${image.media_icon})`, 10);  // The number 10 here corresponds to "Uploading...100% ', 10 characters
                     } else {
                         console.log(lang('get_result_fail'))
                         infoAlert(lang('get_result_fail'));
@@ -630,29 +630,24 @@ $(function () {
     // Select All checkbox
     initCheckboxSelectAll('#checkAllItem', '.checkboxContainer');
 
-    // App Store: app installation
-    $('.installBtn').click(function (e) {
+    // App Store: app installation - Use event delegation
+    $(document).on('click', '.installBtn', function (e) {
         e.preventDefault();
         let link = $(this);
         let down_url = link.data('url');
         let type = link.data('type');
-        // link.text('安装中…');
-        emlog_msg('loading', lang('installing'), 1000, false)
-        link.css({"pointer-events": "none"})
-        // link.parent().prev(".installMsg").html("").addClass("spinner-border text-primary");
-
+        link.text(lang('installing'));
+        link.parent().prev(".installMsg").html("").addClass("spinner-border text-primary");
+    
         let url = './store.php?action=install&type=' + type + '&source=' + down_url;
         $.get(url, function (data) {
-            // link.text('免费安装');
-            emMsgLoad.close()
-            link.css({"pointer-events": 'auto'})
-            if (data.indexOf('成功') !== -1 || data.indexOf('Success') !== -1 || data.indexOf('success') !== -1) {
-                emlog_msg('success', data, 4000)
-                link.html(data);
+            link.text(lang('install'));
+            if (data.includes('成功')) {
+                cocoMessage.success(data, 8000);
             } else {
-                emlog_msg('error', data, 4000)
+                cocoMessage.error(data, 8000);
             }
-            // link.parent().prev(".installMsg").html('<span class="text-danger">' + data + '</span>').removeClass("spinner-border text-primary");
+            link.parent().prev(".installMsg").removeClass("spinner-border text-primary");
         });
     });
 
