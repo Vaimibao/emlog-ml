@@ -26,6 +26,7 @@
     <script src="./views/js/common.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/components/layer/layer.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/components/message.min.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
+    <script src="./views/components/Qmsg.min.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script>var em_lang = '<?= LANG ?>';</script>
     <script src="<?= BLOG_URL ?>lang/<?= LANG ?>/lang_js.js"></script>
     <?php doAction('adm_head') ?>

@@ -25,6 +25,7 @@
     <script src="./views/js/common.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/components/layer/layer.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <script src="./views/components/message.min.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
+    <script src="./views/components/Qmsg.min.js?t=<?= Option::EMLOG_VERSION_TIMESTAMP ?>"></script>
     <?php doAction('adm_head') ?>
     <style>
         #uc-top-bar {
