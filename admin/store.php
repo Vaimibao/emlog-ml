@@ -184,7 +184,7 @@ if ($action === 'install') {
 
     if (!$temp_file) {
         if (false === Register::verifyDownload($source)) {
-            exit(lang('emlog_unregistered') . '<a href="auth.php">'. lang('go_to_register') .'</a>');
+            exit(lang('emlog_unregistered') . '<a href="https://emlog.net/register">'. lang('go_to_register') .'</a>');
         }
         exit(lang('download_file_timeout'));
     }

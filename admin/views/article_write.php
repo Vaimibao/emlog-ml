@@ -26,19 +26,19 @@
                     <div class="mt-2" id="field_box">
                         <?php
                         foreach ($fields as $key => $value): ?>
-                            <div class="form-row field_list">
-                                <div class="col-sm-4">
-                                    <input type="text" name="field_keys[]" value="<?= $key ?>" list="customFieldList" id="field_keys" class="form-control" placeholder="<?= lang('field_name2') ?>" maxlength="120" required>
+                            <div class="form-row field_list mb-3">
+                                <div class="col-sm-3 px-2 my-1">
+                                    <input type="text" name="field_keys[]" value="<?= $key ?>" list="customFieldList" class="form-control field-keys-input" placeholder="<?= lang('field_name') ?>" maxlength="120" required>
                                     <datalist id="customFieldList">
                                         <?php foreach ($customFields as $k => $v): ?>
                                             <option value="<?= $k ?>"><?= $k . '【' . $v['name'] . '】' . $v['description'] ?></option>
                                         <?php endforeach; ?>
                                     </datalist>
                                 </div>
-                                <div class="col-sm-6 mx-sm-3">
-                                    <input type="text" name="field_values[]" value="<?= $value ?>" id="field_values" class="form-control" placeholder="<?= lang('field_value') ?>" required>
+                                <div class="col-sm-8 px-2 my-1">
+                                    <textarea name="field_values[]" class="form-control auto-resize-textarea field-values-textarea" placeholder="<?= lang('field_value') ?>" rows="1" style="resize: vertical; min-height: 33px; white-space: pre-wrap; overflow-x: auto;" required><?= $value ?></textarea>
                                 </div>
-                                <div class="col-auto mt-1 text-align-right">
+                                <div class="col-sm-1 px-2 my-1 d-flex align-items-start justify-content-end">
                                     <button type="button" class="btn btn-sm btn-outline-danger field_del"><?= lang('delete') ?></button>
                                 </div>
                             </div>
@@ -437,26 +437,30 @@
     });
     $(document).on('click', '.field_add', function() {
         var newField = `
-                    <div class="form-row field_list">
-                        <div class="col-sm-4">
-                            <input type="text" name="field_keys[]" list="customFieldList" value="" id="field_keys" class="form-control" placeholder="<?= lang('field_name') ?>" maxlength="120" required>
+                    <div class="form-row field_list mb-3">
+                        <div class="col-sm-3 px-2 my-1">
+                            <input type="text" name="field_keys[]" list="customFieldList" value="" class="form-control field-keys-input" placeholder="<?= lang('field_name') ?>" maxlength="120" required>
                             <datalist id="customFieldList">
                                 <?php foreach ($customFields as $k => $v): ?>
                                     <option value="<?= $k ?>"><?= $k . '【' . $v['name'] . '】' . $v['description'] ?></option>
                                 <?php endforeach; ?>
                             </datalist>
                         </div>
-                        <div class="col-sm-6 mx-sm-3">
-                            <input type="text" name="field_values[]" value="" id="field_values" class="form-control" placeholder="<?= lang('field_value') ?>" required>
+                        <div class="col-sm-8 px-2 my-1">
+                            <textarea name="field_values[]" value="" class="form-control auto-resize-textarea field-values-textarea" placeholder="<?= lang('field_value') ?>" rows="1" style="resize: vertical; min-height: 33px; white-space: pre-wrap; overflow-x: auto;" required></textarea>
                         </div>
-                        <div class="col-auto mt-1">
+                        <div class="col-sm-1 px-2 my-1 d-flex align-items-start justify-content-end">
                             <button type="button" class="btn btn-sm btn-outline-danger field_del"><?= lang('delete') ?></button>
                         </div>
                     </div>
                 `;
         $('#field_box').append(newField);
+        // Bind the automatic height adjustment function for the newly added textarea
+        autoResizeTextarea($('#field_box .auto-resize-textarea').last());
     });
 
+    // Bind the automatic height adjustment function for the existing textarea
+    initAutoResizeTextareas();
     // Advanced Options Expand Status
     initDisplayState('adv_set');
     // Auto Intercept Summary Status

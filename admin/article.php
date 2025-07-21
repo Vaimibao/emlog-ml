@@ -83,7 +83,7 @@ if (empty($action)) {
 
     $logNum = $Log_Model->getLogNum($hide_state, $condition, 'blog', 1);
     $logs = $Log_Model->getLogsForAdmin($condition . $orderBy, $hide_state, $page, 'blog', $perPage);
-    $sorts = $CACHE->readCache('sort');
+    $sorts = Sort::getUserPostableSorts();
     $tags = $Tag_Model->getTags();
 
     $subPage = '';
@@ -284,7 +284,8 @@ if ($action === 'write') {
     $isdraft = false;
     $containerTitle = User::haveEditPermission() ? lang('post_write') : lang('publish') . Option::get('posts_name');
     $orig_date = '';
-    $sorts = $CACHE->readCache('sort');
+    $sorts = Sort::getUserPostableSorts();
+
     $tagStr = '';
     $tags = $Tag_Model->getTags();
     $is_top = '';
@@ -317,7 +318,7 @@ if ($action === 'edit') {
     $postsName = User::isAdmin() ? lang('article') : Option::get('posts_name');
     $containerTitle = $isdraft ? lang('draft_edit') : lang('edit') . $postsName;
     $postDate = date('Y-m-d H:i:s', $date);
-    $sorts = $CACHE->readCache('sort');
+    $sorts = Sort::getUserPostableSorts();
 
     //tag
     $tags = [];

@@ -34,6 +34,12 @@ https://www.emlog.net
 * Server management panel software recommended：[Bt panel](https://www.bt.cn/u/N0UABa) （support[Deploy emlog with one click](install_bt.md)）
 * Browsers recommend: Chrome、Edge
 
+## Upgrade requirements [important]
+> 2.5.17 -> 2.5.18, Because the version does not support online update, you must operate in the following order
+
+1. Enter the site database management (you can use phpMyAdmin, Navicat or other tools)
+2. Execute sql statement: `ALTER TABLE emlog_sort ADD COLUMN allow_user_post enum('n','y') NOT NULL default 'y' COMMENT 'Allow users to publish articles';`
+
 ## Regular installation
 
 1. [Downloading the emlog](https://www.emlog.net/download), Upload all the unzipped files to the web root directory of the server, or directly upload the zip installation package and unzip it online.

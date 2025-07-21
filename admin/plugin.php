@@ -164,7 +164,7 @@ if ($action === 'check_update') {
         Output::error(lang('update_failed_network'));
     }
     if ($ret['code'] === MSGCODE_EMKEY_INVALID) {
-        Output::error(lang('pro_unregistered_tip') . '，<a href="auth.php">'. lang('to_register_pro') .'</a>');
+        Output::error(lang('pro_unregistered_tip') . '，<a href="https://emlog.net/register">'. lang('to_register_pro') .'</a>');
     }
 
     Output::ok($ret['data']);

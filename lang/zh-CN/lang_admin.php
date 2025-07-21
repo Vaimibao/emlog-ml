@@ -564,8 +564,8 @@ $lang = array(
     'advantage1' => '1. 获得在线升级功能，一键升级到最新版本',//'1. Get online upgrade function and upgrade to the latest version with one click',
     'advantage2' => '2. 解锁完整应用商店功能，包括应用在线更新',//'2. Unlock full Store features, including app online updates',
     'advantage3' => '3. 去除所有未正版注册提示及功能限制',//'3. Remove all unregistered prompts and functional restrictions',
-    'advantage4' => '4. 铁杆SVIP免费应用：超过20款付费插件、多款付费主题免费用',//'4. Free application of hardcore SVIP: more than 20 paid plug-ins and multiple paid themes are free of charge',
-    'register_now' => '开始正版注册',//'Start genuine registration',
+    'advantage4' => '4. 铁杆SVIP免费应用：超过30款付费插件、多款付费主题免费用',//'4. Free application of hardcore SVIP: more than 30 paid plug-ins and multiple paid themes are free of charge',
+    'register_now' => '立即正版注册',//'Start genuine registration',
     'click_to_register' => '点击注册',//'Click to register',
     'emlog_registered_ok' => '恭喜，您的EMLOG已经完成注册。',//'Congratulations, your EMLOG has been registered.',
     'em_reg_ok' => '注册成功，请登录',//'Registration is successful, please log in',
@@ -709,6 +709,10 @@ $lang = array(
     'origin_file_path' => '原文件地址',//'Original file url',
     'edit_resource' => '编辑资源',//'Edit Resource',
     'path_copied' => '地址已复制',//'Path copied',
+    'show_public_download_address' => '公开下载地址',//'Public download url',
+    'user_download_address' => '登录下载地址',//'Log in to the download url',
+    '_download' => '下载',//'Download',
+    'thumbnail_address' => '缩略图地址',//'Thumbnail url',
 
 //---------------------------
 //admin/views/media_lib.php
@@ -817,6 +821,7 @@ $lang = array(
     'ok_register_now' => '提交注册',//'Start registration',
     'emlog_reg_ok' => '🎉 恭喜，成功完成注册 🎉',//'🎉 Congratulations, registration completed successfully 🎉',
     'enter_reg_code' => '请输入注册码',//'Please enter the registration code',
+    'enter_code' => '输入注册码',//'Enter the registration code',
     'register' => '注册',//'Register',
     'genuine_registration' => '正版注册',//'Genuine registration',
     'registration_failed_tip' => '注册失败了，可能是注册码不正确，或服务器无法访问官网 emlog.net',//'Registration failed. It may be that the registration code is incorrect, or the server cannot access the official website emlog.net',
@@ -1021,6 +1026,8 @@ $lang = array(
     'template_name' => '模板名',//'Template name',
     'category_id' => '分类ID',//'Category ID',
     'cover' => '图像',//'Cover image',
+    'no_contribution' => '不允许投稿',//'No contribution',
+    'allow_publish_cat' => '允许注册用户在该分类下发文投稿',//'Allow registered users to publish and submit articles under this category',
 
 //---------------------------
 //admin/views/sort_edit.php
@@ -1084,7 +1091,7 @@ $lang = array(
     'no_my_apps' => '您还没有购买任何应用。',//'You have not purchased any apps.',
     'install_app' => '安装应用',//'Install app',
     'to_official_site' => '去官网查看',//'Go to the official website',
-    'not_paid_registered_user' => '您还不是付费注册用户，无法使用应用商店已购功能，',//'You are not a paid registered user and cannot use the features purchased in the App Store,',
+    'not_paid_registered_user' => '您还不是正版注册用户，无法使用应用商店已购功能，',//'You are not a genuine registered user and cannot use the features purchased in the App Store,',
 
 //---------------------------
 //admin/views/store_plu.php

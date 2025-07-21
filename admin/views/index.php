@@ -110,7 +110,7 @@
             <div class="col-lg-6 mb-3">
                 <div class="card shadow">
                     <div class="card-header bg-gradient-warning text-danger">
-                        <h6 class="my-0"><?= lang('emlog_reg_advantages') ?></h6>
+                        <h6 class="my-0 font-weight-bold"><?= lang('emlog_reg_advantages') ?></h6>
                     </div>
                     <div class="card-body">
                         <p><span class="badge badge-warning badge-pill">1</span> <?= lang('advantage1') ?></p>
@@ -118,12 +118,12 @@
                         <p><span class="badge badge-warning badge-pill">3</span> <?= lang('advantage3') ?></p>
                         <p><span class="badge badge-warning badge-pill">4</span> <?= lang('advantage4') ?></p>
                         <p>
-                            <a href="auth.php" class="btn btn-danger px-4">
+                            <a href="https://emlog.net/register" target="_blank" class="btn btn-danger px-4">
                                 <?= lang('register_now') ?>
-                            </a>
-                            <a href="https://emlog.net/register" target="_blank" class="btn btn-outline-success px-4">
                                 <i class="icofont-external-link me-2"></i>
-                                <?= lang('get_emkey') ?>
+                            </a>
+                            <a href="auth.php" class="btn btn-outline-success px-4">
+                                <?= lang('enter_code') ?>
                             </a>
                         </p>
                     </div>

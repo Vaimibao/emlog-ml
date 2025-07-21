@@ -10,9 +10,9 @@ defined('EMLOG_ROOT') || exit('access denied!');
 // Add button style for download link
 function add_download_style($logData, &$result)
 {
-    // Modify the regular expression to match the href download link with ?resource_alias and file suffix. zip, etc
-    $pattern = '/(href="[^"]*(\?resource_alias=.{16}|\.zip|\.rar|\.7z|\.gz|\.bz2))">/';
-    $replacement = '$1" class="em-download-btn"><span class="iconfont icon-clouddownload"></span> ';
+    // Optimize regular expressions to match multiple download link formats
+    $pattern = '/<a\s+([^>]*href="[^"]*(?:\?resource_alias=[^&"]*(?:&resource_filename=[^"]*)?|\.(?:zip|rar|7z|gz|bz2|tar|exe|dmg|pkg|deb|rpm))(?:[^"]*)?"[^>]*)>/i';
+    $replacement = '<a $1 class="em-download-btn"><span class="iconfont icon-clouddownload"></span> ';
     $result['log_content'] = preg_replace($pattern, $replacement, $logData['log_content']);
 }
 

@@ -175,8 +175,8 @@ var LNG = {
 //admin/views/js/media-lib.js
     'insert_to_article': 'Insert to the article',//'插入文章',
     'set_cover': 'Set as cover',//'设为封面',
-    'public_download': 'Public Download',//'公开下载',
-    'user_download': 'User Download',//'用户下载',
+    'public_download': 'Public download',//'公开下载',
+    'user_download': 'Log in to download',//'登录下载',
     'file_size': 'File size: ',//'文件大小：',
     'upload_files': 'Upload image/file',//'上传图片/文件',
 

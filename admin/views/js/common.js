@@ -526,7 +526,7 @@ function checkUpdate() {
 
     $.get("./upgrade.php?action=check_update", function (result) {
         if (result.code === 1001) {
-            rep_msg = lang('emlog_not_registered') + ", <a href=\"auth.php\">"+ lang('register') +"</a>";
+            rep_msg = lang('emlog_not_registered') + ", <a href=\"https://emlog.net/register\" target=\"_blank\">"+ lang('register') +"</a>";
         } else if (result.code === 1002) {
             rep_msg = lang('is_latest_version');
         } else if (result.code === 200) {
@@ -624,6 +624,69 @@ function initCheckboxSelectAll(checkAllSelector, containerSelector) {
         });
         $(checkAllSelector).prop('checked', allChecked);
     });
+}
+
+/**
+ * A general method for automatically adjusting the height of textarea
+ * @param {jQuery|string} selector - JQuery object or selector string
+ * @param {Object} options - configuration option
+ * @param {number} options.minHeight - Minimum height, default 33px
+ * @param {number} options.maxHeight - Maximum height, unlimited by default
+ * @param {number} options.padding - Extra padding, default 2px
+ */
+function autoResizeTextarea(selector, options = {}) {
+    const defaults = {
+        minHeight: 33,
+        maxHeight: null,
+        padding: 2
+    };
+    
+    const config = Object.assign(defaults, options);
+    
+    function bindResize($textarea) {
+        $textarea.on('input propertychange', function() {
+            const element = this;
+            element.style.height = 'auto';
+            
+            let newHeight = element.scrollHeight + config.padding;
+            
+            // Apply minimum height limit
+            if (newHeight < config.minHeight) {
+                newHeight = config.minHeight;
+            }
+            
+            // Apply maximum height limit
+            if (config.maxHeight && newHeight > config.maxHeight) {
+                newHeight = config.maxHeight;
+                element.style.overflowY = 'auto';
+            } else {
+                element.style.overflowY = 'hidden';
+            }
+            
+            element.style.height = newHeight + 'px';
+        });
+        
+        // Adjust once during initialization
+        $textarea.trigger('input');
+    }
+    
+    // Working with different types of selectors
+    if (typeof selector === 'string') {
+        $(selector).each(function() {
+            bindResize($(this));
+        });
+    } else if (selector instanceof jQuery) {
+        selector.each(function() {
+            bindResize($(this));
+        });
+    }
+}
+
+/**
+ * Initialize all text fields in the page with the auto-resize-textarea class
+ */
+function initAutoResizeTextareas() {
+    autoResizeTextarea('.auto-resize-textarea');
 }
 
 $(function () {
