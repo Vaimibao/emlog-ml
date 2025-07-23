@@ -451,7 +451,7 @@ Extended 8 badge color styles - based on Bootstrap4
 
 /* 5. Light grey badge - neutral/default */
 .badge-light-gray {
-    color: #495057;
+    color: #495057!important;
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
 }
