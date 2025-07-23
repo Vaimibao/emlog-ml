@@ -5,12 +5,42 @@
  * @package EMLOG
  * @link https://www.emlog.net
  */
+if (!isset($_SESSION)) {
+    session_start();
+}
 
 const EMLOG_ROOT = __DIR__;
-const LANG = 'en';            //zh-CN, en, ru, etc.
 const LANG_DIR = 'ltr';       //ltr, rtl
+const LANG_LIST_INSTALL = [
+    'zh-CN' => [
+        'name'=>'简体中文',
+        'title'=>'Simplified Chinese',
+        'dir' => 'ltr',
+    ],
+    'en' => [
+        'name'=>'English',
+        'title'=>'English',
+        'dir' => 'ltr',
+    ],
+];
 
 require_once EMLOG_ROOT . '/include/lib/common.php';
+
+//Set Interface language
+$url = $_SERVER['REQUEST_URI'];
+if (isset($_GET['language'])) {
+    define('LANG', $_GET['language']);
+    $url = removeParam('language', $url);
+    $_SESSION['LANG'] = $_GET['language'];
+    emDirect($url);
+} else {
+    if (empty($_SESSION['LANG'])) {
+        define('LANG', 'en'); //zh-CN, en, ru, etc.
+        $_SESSION['LANG'] = 'en';
+    } else {
+        define('LANG', $_SESSION['LANG']);
+    }
+}
 
 load_language('install');
 load_language('core');
@@ -71,6 +101,7 @@ if (!$act) {
             }
 
             .main {
+                position: relative;
                 background-color: #FFFFFF;
                 font-size: 12px;
                 color: #666666;
@@ -196,6 +227,86 @@ if (!$act) {
                     width: unset;
                 }
             }
+            .dropdown {
+                position: relative;
+            }
+            .dropdown-toggle {
+                white-space: nowrap;
+            }
+            .language-box .nav-link {
+                position: relative;
+            }
+            .language-box .nav-link {
+                color: #4a4a4a;
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                gap: 6px;
+                border-radius: 8px;
+                box-shadow: 0px 1px 6px 1px rgba(44, 44, 44, 0.1);
+            }
+            .dropdown-menu {
+                position: absolute;
+                width: auto;
+                right: 0;
+                z-index: 1000;
+                float: left;
+                min-width: fit-content;
+                margin: 0.125rem 0 0;
+                font-size: 0.85rem;
+                text-align: left;
+                list-style: none;
+                opacity: 0;
+                visibility: hidden;
+                display: unset;
+                transform: translateY(6px);
+                transition: .4s;
+                border-radius: 8px;
+                box-shadow: 0px 1px 6px 1px rgba(44, 44, 44, 0.1);
+                background: rgba(255, 255, 255, 0.9);
+                will-change: transform;
+                backdrop-filter: saturate(180%) blur(20px);
+            }
+            .dropdown-item {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                padding: 6px;
+                clear: both;
+                font-weight: 400;
+                color: #3a3b45;
+                text-align: inherit;
+                white-space: nowrap;
+                background-color: transparent;
+                border: 0;
+            }
+            .dropdown:hover .dropdown-menu {
+                opacity: 1;
+                transform: translateY(0);
+                visibility: unset;
+            }
+            .lang-flag {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                object-fit: cover;
+                vertical-align: middle;
+            }
+            .language-box {
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .language-box a {
+                font-size: 0.85rem;
+                text-decoration: none;
+                transition: all .2s;
+            }
+            .language-box a:hover {
+                background: #f3f3f3;
+                border-radius: 8px;
+            }
         </style>
     </head>
 
@@ -204,6 +315,20 @@ if (!$act) {
             <div class="main">
                 <p class="logo"></p>
                 <p class="title mb20">emlog <?= Option::EMLOG_VERSION ?></p>
+                <!-- Change Language -->
+                <div class="language-box">
+                    <div class="dropdown">
+                        <span class="nav-link dropdown-toggle" data-toggle="dropdown"><span><img class="lang-flag" src="http://<?= $_SERVER['HTTP_HOST'] ?>/lang/<?= LANG ?>/flag.svg"></span><?= LANG_LIST_INSTALL[$_SESSION['LANG']]['name'] ?></span>
+                        <div class="dropdown-menu"><!-- RIGHT -->
+                            <?php
+                            foreach(LANG_LIST_INSTALL as $l => $lng) {
+                                $selected = ($_SESSION['LANG'] == $l) ? 'selected="selected"' : '';
+                                ?>
+                                <a class="dropdown-item flex alc gap6" href="?language=<?= $l ?>" title="<?= LANG_LIST_INSTALL[$l]['title'] ?>"><img class="lang-flag" src="http://<?= $_SERVER['HTTP_HOST'] ?>/lang/<?= $l ?>/flag.svg"> <?= LANG_LIST_INSTALL[$l]['name'] ?></a>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
                 <?php if ($env_db_user): ?>
                     <div class="b">
                         <input name="hostname" type="hidden" value="<?= $env_db_host ?>">
@@ -384,14 +509,14 @@ EOT;
         . "const DEFAULT_LANG = 'en'; //'en', 'ru', 'zh-CN', 'zh-TW', 'pt-BR', etc."
         . "\n// Enabled language list\n"
         . "const LANG_LIST = [\n"
-        . "    'en' => [\n"
-        . "        'name'=>'English',\n"
-        . "        'title'=>'English',\n"
-        . "        'dir'=>'ltr',\n"
-        . "    ],\n"
         . "    'zh-CN' => [\n"
         . "         'name'=>'简体中文',\n"
         . "        'title'=>'Simplified Chinese',\n"
+        . "        'dir'=>'ltr',\n"
+        . "    ],\n"
+        . "    'en' => [\n"
+        . "        'name'=>'English',\n"
+        . "        'title'=>'English',\n"
         . "        'dir'=>'ltr',\n"
         . "    ],\n"
         . "];\n";
